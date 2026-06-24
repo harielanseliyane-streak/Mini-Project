@@ -19,35 +19,35 @@ const HamburgerMenu = ({ open, onClose }) => {
   return (
     <div className="fixed inset-0 z-[100] flex" onClick={onClose}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" />
 
       {/* Drawer */}
-      <div className="relative ml-auto w-full max-w-xs h-full bg-slate-900 border-l border-white/10 flex flex-col shadow-2xl animate-slide-up"
+      <div className="relative ml-auto w-full max-w-xs h-full bg-white border-l border-slate-200 flex flex-col shadow-2xl animate-slide-up"
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <span className="text-sm">🎓</span>
             </div>
-            <span className="font-heading font-bold text-white">InfoHub</span>
+            <span className="font-heading font-bold text-slate-800">InfoHub</span>
           </div>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-all">
+            className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-all">
             ✕
           </button>
         </div>
 
         {/* Nav Items */}
         <nav className="flex-1 p-6 space-y-2">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Navigation</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Navigation</p>
           {items.map(item => (
             <Link key={item.to} to={item.to} onClick={onClose}
-              className="flex items-center gap-4 p-4 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group">
+              className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group">
               <span className="text-2xl group-hover:scale-110 transition-transform">{item.icon}</span>
               <div>
-                <p className="text-sm font-semibold text-white">{item.label}</p>
+                <p className="text-sm font-semibold text-slate-800">{item.label}</p>
                 <p className="text-xs text-slate-500">{item.desc}</p>
               </div>
             </Link>
@@ -55,8 +55,8 @@ const HamburgerMenu = ({ open, onClose }) => {
         </nav>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/10">
-          <p className="text-xs text-slate-500 text-center">© 2025 InfoHub Platform. All rights reserved.</p>
+        <div className="p-6 border-t border-slate-100">
+          <p className="text-xs text-slate-400 text-center">© 2026 InfoHub Platform. All rights reserved.</p>
         </div>
       </div>
     </div>

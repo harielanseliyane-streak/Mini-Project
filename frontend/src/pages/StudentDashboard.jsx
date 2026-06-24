@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   getStudentProfile, updateStudentProfile, uploadStudentPhoto,
-  getColleges, getRecommendations, getMyApplications, applyToCollege
+  getColleges, getRecommendations, getMyApplications, applyToCollege,
+  getSavedItems, removeSavedItem, saveItem
 } from '../api';
-// getColleges → calls /api/colleges/search (public)
+import CollegeCard from '../components/CollegeCard';
 
 const TabBtn = ({ active, onClick, children }) => (
   <button onClick={onClick}
     className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-      active ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-             : 'text-slate-400 hover:text-white hover:bg-white/5'
+      active ? 'bg-primary/20 text-primary border border-primary/30'
+             : 'text-slate-500 hover:text-primary hover:bg-slate-100'
     }`}>
     {children}
   </button>
@@ -25,6 +27,8 @@ const StudentDashboard = () => {
   const [colleges,        setColleges]        = useState([]);
   const [recommendations, setRecommendations] = useState(null);
   const [applications,    setApplications]    = useState([]);
+  const [savedItems,      setSavedItems]      = useState([]);
+  const [favoritesMap,    setFavoritesMap]    = useState({});
   const [loading,         setLoading]         = useState(true);
   const [saving,          setSaving]          = useState(false);
   const [search,          setSearch]          = useState('');
@@ -42,9 +46,20 @@ const StudentDashboard = () => {
 
   // Lazy-load tabs
   useEffect(() => {
-    if (tab === 'colleges' && colleges.length === 0) {
+    if (tab === 'colleges') {
       getColleges({ search, cutoff: cutoffFilter })
         .then(r => setColleges(r.data.colleges || []))
+        .catch(() => {});
+      
+      getSavedItems()
+        .then(res => {
+          const items = res.data.saved_items || [];
+          const mapping = {};
+          items.forEach(item => {
+            if (item.type === 'college') mapping[item.item_id] = item.id;
+          });
+          setFavoritesMap(mapping);
+        })
         .catch(() => {});
     }
     if (tab === 'recommendations') {
@@ -57,7 +72,71 @@ const StudentDashboard = () => {
         .then(r => setApplications(r.data.applications || []))
         .catch(() => {});
     }
+    if (tab === 'favorites') {
+      getSavedItems()
+        .then(res => {
+          const items = res.data.saved_items || [];
+          setSavedItems(items);
+          const mapping = {};
+          items.forEach(item => {
+            if (item.type === 'college') mapping[item.item_id] = item.id;
+          });
+          setFavoritesMap(mapping);
+        })
+        .catch(() => {});
+    }
   }, [tab]);
+
+  const handleToggleFavorite = async (collegeId) => {
+    const savedId = favoritesMap[collegeId];
+    if (savedId) {
+      try {
+        await removeSavedItem(savedId);
+        setFavoritesMap(prev => {
+          const updated = { ...prev };
+          delete updated[collegeId];
+          return updated;
+        });
+        setSavedItems(prev => prev.filter(item => item.id !== savedId));
+        setMsg("✅ Removed from favorites");
+      } catch (e) {
+        setMsg("❌ Failed to remove favorite");
+      }
+    } else {
+      try {
+        const res = await saveItem('college', collegeId);
+        const newItem = res.data.saved;
+        setFavoritesMap(prev => ({
+          ...prev,
+          [collegeId]: newItem.id
+        }));
+        setMsg("✅ Added to favorites! ❤️");
+        // Re-load saved list to refresh layout if favorited
+        getSavedItems().then(res => setSavedItems(res.data.saved_items || []));
+      } catch (e) {
+        setMsg("❌ Failed to add favorite");
+      }
+    }
+    setTimeout(() => setMsg(''), 3000);
+  };
+
+  const handleRemoveFavorite = async (savedId) => {
+    try {
+      await removeSavedItem(savedId);
+      setSavedItems(prev => prev.filter(item => item.id !== savedId));
+      // update map
+      setFavoritesMap(prev => {
+        const updated = { ...prev };
+        const key = Object.keys(updated).find(k => updated[k] === savedId);
+        if (key) delete updated[key];
+        return updated;
+      });
+      setMsg("✅ Removed from favorites");
+    } catch {
+      setMsg("❌ Failed to remove favorite");
+    }
+    setTimeout(() => setMsg(''), 3000);
+  };
 
   const searchColleges = () => {
     getColleges({ search, cutoff: cutoffFilter })
@@ -99,7 +178,7 @@ const StudentDashboard = () => {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center pt-16">
-      <div className="w-10 h-10 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
+      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
     </div>
   );
 
@@ -110,7 +189,7 @@ const StudentDashboard = () => {
         {/* ── Header ────────────────────────────────────── */}
         <div className="flex items-center gap-5 mb-8">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center overflow-hidden cursor-pointer"
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden cursor-pointer"
               onClick={() => photoRef.current?.click()}>
               {profile?.profile_photo_url
                 ? <img src={profile.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
@@ -123,19 +202,18 @@ const StudentDashboard = () => {
             <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-bold text-white">{profile?.name || user?.name}</h1>
-            <p className="text-slate-400 text-sm">{profile?.email || user?.email}</p>
+            <h1 className="font-heading text-2xl font-bold text-slate-800">{profile?.name || user?.name}</h1>
+            <p className="text-slate-500 text-sm">{profile?.email || user?.email}</p>
             {profile?.cutoff && (
-              <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
                 Cutoff: {profile.cutoff}
               </span>
             )}
           </div>
         </div>
 
-        {/* ── Tabs ─────────────────────────────────────── */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          {[['profile','👤 Profile'], ['colleges','🏛️ Colleges'], ['recommendations','🤖 Recommendations'], ['applications','📋 Applications']].map(([t, label]) => (
+          {[['profile','👤 Profile'], ['colleges','🏛️ Colleges'], ['recommendations','🤖 Recommendations'], ['applications','📋 Applications'], ['favorites','❤️ Favorites']].map(([t, label]) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}>{label}</TabBtn>
           ))}
         </div>
@@ -149,7 +227,7 @@ const StudentDashboard = () => {
             {/* Personal Info */}
             <div className="glass rounded-2xl p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="font-heading font-bold text-white text-lg">Personal Info</h2>
+                <h2 className="font-heading font-bold text-slate-800 text-lg">Personal Info</h2>
                 <button onClick={() => setEditMode(m => !m)}
                   className={editMode ? 'btn-danger text-sm px-3 py-1.5' : 'btn-secondary text-sm px-3 py-1.5'}>
                   {editMode ? 'Cancel' : '✏️ Edit'}
@@ -174,7 +252,7 @@ const StudentDashboard = () => {
                     {[['👤 Name', profile?.name], ['📧 Email', profile?.email], ['📞 Phone', profile?.phone || '—'], ['📝 Bio', profile?.bio || '—']].map(([label, val]) => (
                       <div key={label} className="flex items-start gap-3">
                         <span className="text-slate-500 text-sm w-28 flex-shrink-0">{label}</span>
-                        <span className="text-white text-sm">{val}</span>
+                        <span className="text-slate-800 text-sm">{val}</span>
                       </div>
                     ))}
                   </>
@@ -189,7 +267,7 @@ const StudentDashboard = () => {
 
             {/* Academic Info */}
             <div className="glass rounded-2xl p-6">
-              <h2 className="font-heading font-bold text-white text-lg mb-5">Academic Details</h2>
+              <h2 className="font-heading font-bold text-slate-800 text-lg mb-5">Academic Details</h2>
               <div className="space-y-4">
                 {editMode ? (
                   <>
@@ -231,36 +309,35 @@ const StudentDashboard = () => {
           <div>
             {/* Search / Filter */}
             <div className="flex gap-3 mb-6 flex-wrap">
-              <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchColleges()}
-                placeholder="Search by college name..." className="input max-w-sm" />
-              <input value={cutoffFilter} onChange={e => setCutoffFilter(e.target.value)} type="number" placeholder="Max cutoff filter" className="input max-w-[180px]" />
-              <button onClick={searchColleges} className="btn-primary px-5">🔍 Search</button>
+              <input 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                onKeyDown={e => e.key === 'Enter' && searchColleges()}
+                placeholder="Search by college name..." 
+                className="input max-w-sm border border-slate-200" 
+              />
+              <input 
+                value={cutoffFilter} 
+                onChange={e => setCutoffFilter(e.target.value)} 
+                type="number" 
+                placeholder="Max cutoff filter" 
+                className="input max-w-[180px] border border-slate-200" 
+              />
+              <button onClick={searchColleges} className="btn-primary px-5 shadow-sm">Search</button>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {colleges.map(college => {
-                const { CollegeCard: _CC, ...rest } = { CollegeCard: null, ...college };
-                return (
-                  <div key={college.id} className="glass-hover rounded-2xl overflow-hidden">
-                    <div className="p-5">
-                      <div className="flex items-start gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-xl">🏛️</div>
-                        <div>
-                          <h3 className="font-semibold text-white text-sm">{college.college_name}</h3>
-                          <p className="text-slate-400 text-xs mt-0.5">{college.city}, {college.state}</p>
-                        </div>
-                        {college.accreditation && <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">{college.accreditation}</span>}
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 mb-4 text-center">
-                        <div className="glass rounded-lg p-2"><p className="text-xs text-slate-500">Cutoff</p><p className="text-sm font-bold text-indigo-300">{college.min_cutoff ?? '—'}</p></div>
-                        <div className="glass rounded-lg p-2"><p className="text-xs text-slate-500">Courses</p><p className="text-sm font-bold text-white">{college.course_count ?? '—'}</p></div>
-                        <div className="glass rounded-lg p-2"><p className="text-xs text-slate-500">Placed</p><p className="text-sm font-bold text-emerald-400">{college.placement_percent ? `${college.placement_percent}%` : '—'}</p></div>
-                      </div>
-                      <button onClick={() => handleApply(college)} className="btn-primary w-full text-sm py-2">Apply Now</button>
-                    </div>
-                  </div>
-                );
-              })}
-              {colleges.length === 0 && <p className="text-slate-500 col-span-3 text-center py-10">No colleges found. Try searching!</p>}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {colleges.map(college => (
+                <CollegeCard
+                  key={college.id}
+                  college={college}
+                  onApply={handleApply}
+                  isFavorited={!!favoritesMap[college.id]}
+                  onToggleFavorite={() => handleToggleFavorite(college.id)}
+                />
+              ))}
+              {colleges.length === 0 && (
+                <p className="text-slate-400 col-span-3 text-center py-10 font-semibold">No colleges found. Try searching!</p>
+              )}
             </div>
           </div>
         )}
@@ -270,37 +347,41 @@ const StudentDashboard = () => {
           <div>
             {!recommendations ? (
               <div className="text-center py-16 text-slate-400">
-                <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 Loading recommendations...
               </div>
             ) : !profile?.cutoff ? (
-              <div className="glass rounded-2xl p-10 text-center">
+              <div className="card-premium p-10 text-center">
                 <span className="text-5xl block mb-4">🎯</span>
-                <h3 className="font-heading text-xl font-bold text-white mb-2">Update Your Cutoff</h3>
-                <p className="text-slate-400 mb-6">Go to the Profile tab and enter your HSC marks and cutoff to get personalized recommendations.</p>
-                <button onClick={() => setTab('profile')} className="btn-primary">Update Profile</button>
+                <h3 className="font-heading text-xl font-bold text-slate-800 mb-2">Update Your Cutoff</h3>
+                <p className="text-slate-500 mb-6">Go to the Profile tab and enter your HSC marks and cutoff to get personalized recommendations.</p>
+                <button onClick={() => setTab('profile')} className="btn-primary shadow-sm">Update Profile</button>
               </div>
             ) : (
               <div className="space-y-8">
-                <div className="glass rounded-2xl p-5 border-l-4 border-indigo-500">
-                  <p className="text-slate-400 text-sm">Your Cutoff Score</p>
+                <div className="card-premium p-6 border-l-4 border-primary shadow-sm">
+                  <p className="text-slate-400 text-sm font-semibold">Your Cutoff Score</p>
                   <p className="text-3xl font-bold gradient-text">{profile.cutoff}<span className="text-slate-400 text-base font-normal">/200</span></p>
                 </div>
 
                 <div>
-                  <h2 className="font-heading text-xl font-bold text-white mb-4">🏛️ Eligible Colleges ({recommendations.eligible_colleges?.length})</h2>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <h2 className="font-heading text-xl font-bold text-slate-800 mb-4">🏛️ Eligible Colleges ({recommendations.eligible_colleges?.length})</h2>
+                  <div className="grid md:grid-cols-2 gap-5">
                     {recommendations.eligible_colleges?.map((c, i) => (
-                      <div key={i} className="glass-hover rounded-xl p-4">
+                      <div key={i} className="card-premium p-5 hover:border-primary/20 transition-all">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-white text-sm">{c.college_name}</h3>
-                          {c.accreditation && <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">{c.accreditation}</span>}
+                          <h3 className="font-semibold text-slate-800 text-sm">{c.college_name}</h3>
+                          {c.accreditation && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold">
+                              {c.accreditation}
+                            </span>
+                          )}
                         </div>
                         <p className="text-slate-400 text-xs mb-3">{c.city}, {c.state}</p>
-                        <div className="flex gap-3 text-xs">
-                          <span className="text-indigo-300">📚 {c.course_name}</span>
+                        <div className="flex gap-3 text-xs font-semibold">
+                          <span className="text-primary">📚 {c.course_name}</span>
                           <span className="text-slate-400">Cutoff: {c.course_cutoff}</span>
-                          {c.placement_percent && <span className="text-emerald-400">✅ {c.placement_percent}% placed</span>}
+                          {c.placement_percent && <span className="text-emerald-500">✅ {c.placement_percent}% placed</span>}
                         </div>
                       </div>
                     ))}
@@ -309,14 +390,14 @@ const StudentDashboard = () => {
 
                 {recommendations.scholarships?.length > 0 && (
                   <div>
-                    <h2 className="font-heading text-xl font-bold text-white mb-4">🎖️ Available Scholarships</h2>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <h2 className="font-heading text-xl font-bold text-slate-800 mb-4">🎖️ Available Scholarships</h2>
+                    <div className="grid md:grid-cols-2 gap-5">
                       {recommendations.scholarships.map((s, i) => (
-                        <div key={i} className="glass rounded-xl p-4 border border-amber-500/20">
-                          <h3 className="font-semibold text-white text-sm mb-1">{s.name}</h3>
+                        <div key={i} className="card-premium p-5 border border-slate-200">
+                          <h3 className="font-semibold text-slate-800 text-sm mb-1">{s.name}</h3>
                           <p className="text-slate-400 text-xs mb-2">{s.college_name}</p>
-                          {s.amount && <p className="text-amber-400 text-sm font-bold">₹{s.amount.toLocaleString()}/year</p>}
-                          {s.eligibility && <p className="text-slate-500 text-xs mt-1">{s.eligibility}</p>}
+                          {s.amount && <p className="text-secondary text-sm font-bold">₹{s.amount.toLocaleString()}/year</p>}
+                          {s.eligibility && <p className="text-slate-500 text-xs mt-1 leading-relaxed">{s.eligibility}</p>}
                         </div>
                       ))}
                     </div>
@@ -330,25 +411,75 @@ const StudentDashboard = () => {
         {/* ── Applications Tab ──────────────────────────── */}
         {tab === 'applications' && (
           <div>
-            <h2 className="font-heading text-xl font-bold text-white mb-5">My Applications ({applications.length})</h2>
+            <h2 className="font-heading text-xl font-bold text-slate-800 mb-5">My Applications ({applications.length})</h2>
             {applications.length === 0 ? (
-              <div className="glass rounded-2xl p-10 text-center text-slate-400">
+              <div className="card-premium p-10 text-center text-slate-400">
                 <span className="text-4xl block mb-3">📋</span>
-                <p>No applications yet. Browse colleges and apply!</p>
-                <button onClick={() => setTab('colleges')} className="btn-primary mt-4 px-6">Browse Colleges</button>
+                <p className="text-slate-500">No applications yet. Browse colleges and apply!</p>
+                <button onClick={() => setTab('colleges')} className="btn-primary mt-4 px-6 shadow-sm">Browse Colleges</button>
               </div>
             ) : (
               <div className="space-y-3">
                 {applications.map(app => (
-                  <div key={app.id} className="glass rounded-xl p-5 flex items-center justify-between">
+                  <div key={app.id} className="card-premium p-5 flex items-center justify-between border border-slate-200">
                     <div>
-                      <h3 className="font-semibold text-white">{app.college_name}</h3>
-                      <p className="text-slate-400 text-sm mt-0.5">
+                      <h3 className="font-semibold text-slate-800">{app.college_name}</h3>
+                      <p className="text-slate-500 text-sm mt-0.5">
                         {app.type === 'event' ? `Event: ${app.event_name}` : `Course: ${app.course_name || 'General Admission'}`}
                       </p>
-                      <p className="text-slate-500 text-xs mt-1">Applied {new Date(app.applied_at).toLocaleDateString()}</p>
+                      <p className="text-slate-400 text-xs mt-1">Applied {new Date(app.applied_at).toLocaleDateString()}</p>
                     </div>
                     <span className={`badge-${app.status}`}>{app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Favorites Tab ────────────────────────────── */}
+        {tab === 'favorites' && (
+          <div>
+            <h2 className="font-heading text-xl font-bold text-slate-800 mb-5">❤️ My Saved Colleges ({savedItems.filter(item => item.type === 'college').length})</h2>
+            {savedItems.filter(item => item.type === 'college').length === 0 ? (
+              <div className="card-premium p-10 text-center text-slate-400">
+                <span className="text-4xl block mb-3">❤️</span>
+                <p className="text-slate-500">You haven't saved any colleges yet. Click the heart on college listings to save them!</p>
+                <button onClick={() => setTab('colleges')} className="btn-primary mt-4 px-6 shadow-sm">Explore Colleges</button>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {savedItems.filter(item => item.type === 'college').map(item => (
+                  <div key={item.id} className="card-premium p-5 flex flex-col justify-between hover:border-primary/20 transition-all">
+                    <div>
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center text-xl flex-shrink-0">
+                          {item.details?.logo ? (
+                            <img src={`/uploads/logos/${item.details.logo}`} alt={item.details.collegeName} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>🏛️</span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2">{item.details?.collegeName}</h3>
+                          <p className="text-slate-400 text-xs mt-0.5">{item.details?.city}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+                      <Link 
+                        to={`/colleges/${item.item_id}`} 
+                        className="flex-1 text-center py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-200/40 text-slate-800 transition-all"
+                      >
+                        View Details
+                      </Link>
+                      <button 
+                        onClick={() => handleRemoveFavorite(item.id)} 
+                        className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-danger/10 text-danger hover:bg-danger/25 transition-all"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

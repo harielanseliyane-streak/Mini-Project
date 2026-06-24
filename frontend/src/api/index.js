@@ -75,5 +75,6 @@ export const uploadMedia = (fd) => api.post('/media/upload', fd, { headers: { 'C
 export const getAdminStats          = () => api.get('/admin/stats');
 export const getAdminStudents       = () => api.get('/admin/students');
 export const getAdminColleges       = () => api.get('/admin/colleges');
+export const addCollegeByAdmin      = (data) => api.post('/admin/colleges', data);
 export const broadcastNotification  = (data) => api.post('/admin/broadcast', data);
 export const deleteReviewByAdmin    = (id) => api.delete(`/admin/reviews/${id}`);

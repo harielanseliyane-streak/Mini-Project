@@ -7,24 +7,17 @@
   html { scroll-behavior: smooth; }
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    @apply bg-bgDark text-textPrimaryDark transition-colors duration-300 antialiased min-h-screen;
-  }
-  /* Light theme active when class "light" is present on the html or body element */
-  body.light, html.light body {
-    @apply bg-bgLight text-textPrimaryLight;
+    @apply bg-white text-slate-800 transition-colors duration-300 antialiased min-h-screen;
   }
 }
 
 @layer components {
   /* ── Premium Surfaces & Cards ── */
   .card-premium {
-    @apply bg-cardDark border border-borderDark rounded-2xl shadow-premium transition-all duration-300;
-  }
-  body.light .card-premium, html.light .card-premium {
-    @apply bg-cardLight border border-borderLight shadow-premium-light;
+    @apply bg-white border border-slate-200/80 rounded-2xl shadow-premium-light transition-all duration-300;
   }
   .card-premium-hover {
-    @apply card-premium hover:scale-[1.02] hover:shadow-primary-glow hover:border-primary/30;
+    @apply card-premium hover:scale-[1.01] hover:shadow-premium hover:border-primary/20;
   }
 
   /* ── Custom Premium Buttons ── */
@@ -35,23 +28,17 @@
   }
 
   .btn-secondary {
-    @apply relative border border-secondary text-white font-semibold px-6 py-3 rounded-2xl bg-surfaceDark/50
-           hover:bg-secondary hover:text-white transition-all duration-300 overflow-hidden;
-  }
-  body.light .btn-secondary, html.light .btn-secondary {
-    @apply text-secondary border-secondary bg-transparent hover:bg-secondary hover:text-white;
+    @apply border border-secondary text-secondary font-semibold px-6 py-3 rounded-2xl bg-transparent
+           hover:bg-gradient-to-r hover:from-primary hover:to-secondary hover:text-white hover:-translate-y-0.5 transition-all duration-300;
   }
 
   .btn-ghost {
-    @apply bg-transparent text-textSecondaryDark hover:bg-white/5 hover:text-white font-semibold px-6 py-3 rounded-2xl transition-all duration-300;
-  }
-  body.light .btn-ghost, html.light .btn-ghost {
-    @apply text-textSecondaryLight hover:bg-black/5 hover:text-textPrimaryLight;
+    @apply bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900 font-semibold px-6 py-3 rounded-2xl transition-all duration-300;
   }
 
   .btn-ai {
-    @apply bg-gradient-to-r from-accent to-primary text-white font-semibold px-6 py-3 rounded-2xl flex items-center gap-2
-           animate-pulse-slow hover:shadow-primary-glow hover:animate-none transition-all duration-300;
+    @apply bg-gradient-to-r from-purple to-secondary text-white font-semibold px-6 py-3 rounded-2xl flex items-center gap-2
+           animate-pulse-slow hover:shadow-secondary-glow hover:animate-none transition-all duration-300;
   }
 
   .btn-danger {
@@ -64,21 +51,12 @@
 
   /* ── Inputs ── */
   .input-premium, .input {
-    @apply w-full bg-surfaceDark/50 border border-borderDark rounded-2xl px-4 py-3 text-white placeholder-mutedDark
+    @apply w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-slate-800 placeholder-slate-400
            focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-300;
-  }
-  body.light .input-premium, html.light .input-premium,
-  body.light .input, html.light .input {
-    @apply bg-white border border-borderLight text-textPrimaryLight placeholder-mutedLight
-           focus:border-primary focus:ring-primary/50;
   }
 
   .label-premium, .label {
-    @apply block text-sm font-semibold text-textSecondaryDark mb-2;
-  }
-  body.light .label-premium, html.light .label-premium,
-  body.light .label, html.light .label {
-    @apply text-textSecondaryLight;
+    @apply block text-sm font-semibold text-slate-600 mb-2;
   }
 
   /* ── Status Badges ── */
@@ -101,44 +79,30 @@
     background: transparent;
   }
   .scrollbar-premium::-webkit-scrollbar-thumb {
-    @apply bg-secondary/30 rounded-full hover:bg-secondary/50 transition-colors;
+    @apply bg-secondary/20 rounded-full hover:bg-secondary/40 transition-colors;
   }
 
   /* ── Glassmorphism ── */
   .glass {
-    background: rgba(18, 26, 47, 0.5);
+    background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    @apply shadow-premium transition-all duration-300;
-  }
-  body.light .glass, html.light .glass {
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    @apply shadow-premium-light;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    @apply shadow-premium-light transition-all duration-300;
   }
 
   .glass-hover {
     @apply glass;
-    @apply hover:scale-[1.02] hover:shadow-primary-glow hover:border-primary/30 transition-all duration-300;
-  }
-  body.light .glass-hover:hover, html.light .glass-hover:hover {
-    @apply shadow-premium-light border-primary/20;
+    @apply hover:scale-[1.01] hover:shadow-premium hover:border-primary/20 transition-all duration-300;
   }
 
   /* ── Typography & Headings ── */
   .section-title {
-    @apply font-heading text-3xl md:text-4xl font-bold text-white text-center mb-4;
-  }
-  body.light .section-title, html.light .section-title {
-    @apply text-textPrimaryLight;
+    @apply font-heading text-3xl md:text-4xl font-bold text-slate-800 text-center mb-4;
   }
 
   .section-sub {
-    @apply text-slate-400 text-sm md:text-base text-center max-w-xl mb-8 leading-relaxed;
-  }
-  body.light .section-sub, html.light .section-sub {
-    @apply text-textSecondaryLight;
+    @apply text-slate-500 text-sm md:text-base text-center max-w-xl mb-8 leading-relaxed;
   }
 
   .gradient-text {
@@ -148,11 +112,59 @@
 
 /* Shimmer placeholder logic */
 .shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%);
+  background: linear-gradient(90deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.03) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }
-body.light .shimmer, html.light .shimmer {
-  background: linear-gradient(90deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.03) 100%);
-  background-size: 200% 100%;
+
+/* ── UI Theme Direct Overrides (Deep Teal & Mint Green) ── */
+.btn-primary, .bg-primary {
+  background: linear-gradient(to right, #006672, #00a896) !important;
+  color: #ffffff !important;
 }
+.btn-primary:hover, .bg-primary:hover {
+  background: linear-gradient(to right, #00525C, #008a7b) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 168, 150, 0.4) !important;
+}
+
+.btn-secondary {
+  border-color: #028090 !important;
+  color: #028090 !important;
+  background-color: transparent !important;
+}
+.btn-secondary:hover {
+  background: linear-gradient(to right, #006672, #028090) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+.text-primary, .hover\:text-primary:hover {
+  color: #006672 !important;
+}
+.text-secondary, .hover\:text-secondary:hover {
+  color: #028090 !important;
+}
+
+.from-primary {
+  --tw-gradient-from: #006672 !important;
+  --tw-gradient-to: rgba(0, 102, 114, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.to-secondary {
+  --tw-gradient-to: #028090 !important;
+}
+
+.border-primary {
+  border-color: #006672 !important;
+}
+.border-secondary {
+  border-color: #028090 !important;
+}
+
+.focus\:border-primary:focus {
+  border-color: #006672 !important;
+}
+.focus\:ring-primary\/50:focus {
+  --tw-ring-color: rgba(0, 102, 114, 0.5) !important;
+}
+

@@ -234,7 +234,7 @@ const Quiz = () => {
               className="card-premium p-8 md:p-12 relative overflow-hidden"
             >
               {/* Progress bar */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
+              <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
                 <div 
                   className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300"
                   style={{ width: `${((currentStep) / QUESTIONS.length) * 100}%` }}
@@ -258,7 +258,7 @@ const Quiz = () => {
                 </div>
               ) : (
                 <div>
-                  <h2 className="font-heading text-xl md:text-2xl font-bold text-white mb-8">
+                  <h2 className="font-heading text-xl md:text-2xl font-bold text-slate-800 mb-8">
                     {currentQuestion.text}
                   </h2>
 
@@ -268,9 +268,9 @@ const Quiz = () => {
                         <button
                           key={index}
                           onClick={() => handleChoiceSelect(opt)}
-                          className="w-full text-left card-premium p-4 md:p-5 flex items-center justify-between group hover:border-primary/50 hover:bg-white/5 transition-all duration-300"
+                          className="w-full text-left card-premium p-4 md:p-5 flex items-center justify-between group hover:border-primary/50 hover:bg-slate-50 transition-all duration-300"
                         >
-                          <span className="text-sm font-medium text-textSecondaryDark group-hover:text-white transition-colors">
+                          <span className="text-sm font-medium text-textSecondaryDark group-hover:text-primary transition-colors">
                             {opt.text}
                           </span>
                           <ArrowRight className="w-4 h-4 text-textSecondaryDark group-hover:text-primary transition-all opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0" />
@@ -313,29 +313,29 @@ const Quiz = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-accent/20 to-primary/20 border border-accent/30 text-accent mb-4">
                   <Award className="w-8 h-8" />
                 </div>
-                <h2 className="font-heading text-2xl md:text-3xl font-bold text-white">Assessment Complete</h2>
+                <h2 className="font-heading text-2xl md:text-3xl font-bold text-slate-800">Assessment Complete</h2>
                 <p className="text-textSecondaryDark text-sm mt-1">Your AI-generated guidance report is ready</p>
               </div>
 
               {/* Scorecard grids */}
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* Career Map Card */}
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-between">
+                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2 text-accent text-xs font-bold uppercase tracking-wider mb-2">
                       <Compass className="w-4 h-4" /> Career Path
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-1">{result.career_path}</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-1">{result.career_path}</h3>
                     <p className="text-xs text-textSecondaryDark font-mono">Archetype: {result.personality}</p>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                  <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between">
                     <span className="text-xs text-textSecondaryDark">Aptitude Score</span>
                     <span className="text-lg font-mono font-bold text-accent">{result.aptitude_score}/100</span>
                   </div>
                 </div>
 
                 {/* Interest Map */}
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
+                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
                   <div className="flex items-center gap-2 text-secondary text-xs font-bold uppercase tracking-wider mb-4">
                     <Heart className="w-4 h-4" /> Interest Map
                   </div>
@@ -344,9 +344,9 @@ const Quiz = () => {
                       <div key={label}>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-textSecondaryDark font-medium">{label}</span>
-                          <span className="text-white font-semibold">{val}%</span>
+                          <span className="text-slate-800 font-semibold">{val}%</span>
                         </div>
-                        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full bg-secondary rounded-full" style={{ width: `${val}%` }} />
                         </div>
                       </div>
@@ -356,7 +356,7 @@ const Quiz = () => {
               </div>
 
               {/* Skills Analysis */}
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/5 mb-8">
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 mb-8">
                 <div className="flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-wider mb-4">
                   <Layers className="w-4 h-4" /> Skills analysis
                 </div>
@@ -365,10 +365,10 @@ const Quiz = () => {
                     <div key={skill} className="flex flex-col gap-1.5">
                       <span className="text-xs text-textSecondaryDark font-semibold">{skill}</span>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full bg-primary rounded-full" style={{ width: `${val}%` }} />
                         </div>
-                        <span className="text-xs text-white font-mono font-bold">{val}%</span>
+                        <span className="text-xs text-slate-800 font-mono font-bold">{val}%</span>
                       </div>
                     </div>
                   ))}
@@ -377,7 +377,7 @@ const Quiz = () => {
 
               {/* AI Guidance text */}
               <div className="p-6 rounded-2xl bg-primary/10 border border-primary/20 mb-8">
-                <h4 className="text-sm font-bold text-white mb-2">🤖 AI Recommendations Summary</h4>
+                <h4 className="text-sm font-bold text-slate-800 mb-2">🤖 AI Recommendations Summary</h4>
                 <p className="text-xs text-textSecondaryDark leading-relaxed whitespace-pre-line">
                   {result.recommendations}
                 </p>

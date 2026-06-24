@@ -5,36 +5,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Dark Mode Base System
-        bgDark: '#0B1020',
-        surfaceDark: '#121A2F',
-        cardDark: '#161F38',
-        borderDark: 'rgba(255,255,255,0.08)',
+        // Dark Mode Base System (re-mapped to light mode for uniform theme)
+        bgDark: '#FFFFFF',
+        surfaceDark: '#FFFFFF',
+        cardDark: '#FFFFFF',
+        borderDark: 'rgba(0,0,0,0.06)',
         
         // Light Mode Base System
-        bgLight: '#F8FAFC',
+        bgLight: '#FFFFFF',
         surfaceLight: '#FFFFFF',
         cardLight: '#FFFFFF',
-        borderLight: 'rgba(0,0,0,0.08)',
+        borderLight: 'rgba(0,0,0,0.06)',
         
         // Brand & Palette
         primary: {
-          DEFAULT: '#4F7CFF',
-          hover: '#3D6BEE',
+          DEFAULT: '#006672', // Deep Teal
+          hover: '#00525C',
         },
         secondary: {
-          DEFAULT: '#7C5CFF',
-          hover: '#6A4AEB',
+          DEFAULT: '#028090', // Vibrant Teal
+          hover: '#016673',
         },
-        accent: '#00B8A9',
+        purple: {
+          DEFAULT: '#00a896', // Mint Green
+          hover: '#008a7b',
+        },
+        accent: '#00a896',
         success: '#22C55E',
         warning: '#F59E0B',
         danger: '#EF4444',
         
         // Text System
-        textPrimaryDark: '#F8FAFC',
-        textSecondaryDark: '#94A3B8',
-        mutedDark: '#64748B',
+        textPrimaryDark: '#0F172A',
+        textSecondaryDark: '#475569',
+        mutedDark: '#94A3B8',
         
         textPrimaryLight: '#0F172A',
         textSecondaryLight: '#475569',

@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Sun, Moon, GraduationCap, LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info } from 'lucide-react';
+import Logo from './Logo';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   
   const profileRef = useRef(null);
   const location = useLocation();
@@ -37,18 +37,7 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    if (nextTheme === 'light') {
-      document.body.classList.add('light');
-      document.documentElement.classList.add('light');
-    } else {
-      document.body.classList.remove('light');
-      document.documentElement.classList.remove('light');
-    }
-    localStorage.setItem('theme', nextTheme);
-  };
+
 
   const handleLogout = () => {
     logout();
@@ -75,19 +64,14 @@ const Navbar = () => {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled 
-        ? 'bg-bgDark/90 border-b border-borderDark backdrop-blur-md shadow-premium body-light:bg-bgLight/90 body-light:border-borderLight' 
+        ? 'bg-white/90 border-b border-slate-200 backdrop-blur-md shadow-sm' 
         : 'bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-primary-glow group-hover:scale-105 transition-all duration-300">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-heading font-bold text-xl text-white body-light:text-textPrimaryLight">
-              Info<span className="text-primary">Hub</span>
-            </span>
+          <Link to="/" className="flex items-center gap-2 group">
+            <Logo />
           </Link>
 
           {/* Desktop Nav */}
@@ -98,8 +82,8 @@ const Navbar = () => {
                 to={link.to}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   location.pathname === link.to
-                    ? 'text-white bg-white/10 body-light:text-primary body-light:bg-primary/10'
-                    : 'text-textSecondaryDark hover:text-white hover:bg-white/5 body-light:text-textSecondaryLight body-light:hover:text-primary body-light:hover:bg-primary/5'
+                    ? 'text-primary bg-primary/10'
+                    : 'text-slate-600 hover:text-primary hover:bg-primary/5'
                 }`}
               >
                 {link.label}
@@ -109,38 +93,29 @@ const Navbar = () => {
 
           {/* Controls & User drop down */}
           <div className="flex items-center gap-3">
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className="p-2.5 rounded-xl border border-borderDark hover:bg-white/5 text-textSecondaryDark hover:text-white transition-all duration-200 body-light:border-borderLight body-light:text-textSecondaryLight body-light:hover:bg-black/5 body-light:hover:text-textPrimaryLight"
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
             {isAuthenticated ? (
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(p => !p)}
-                  className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-borderDark hover:bg-white/10 transition-all duration-200 body-light:bg-black/5 body-light:border-borderLight"
+                  className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-all duration-200"
                 >
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xs font-bold text-white shadow-primary-glow">
                     {user?.name?.[0]?.toUpperCase() || 'U'}
                   </div>
-                  <span className="hidden sm:block text-xs font-bold text-white body-light:text-textPrimaryLight max-w-[100px] truncate">
+                  <span className="hidden sm:block text-xs font-bold text-slate-800 max-w-[100px] truncate">
                     {user?.name}
                   </span>
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-52 card-premium py-1 animate-slide-up border border-borderDark shadow-premium">
-                    <div className="px-4 py-3 border-b border-borderDark">
-                      <p className="text-xs font-bold text-white body-light:text-textPrimaryLight truncate">{user?.name}</p>
-                      <p className="text-[10px] font-bold text-textSecondaryDark uppercase mt-0.5 tracking-wider">{user?.role} Profile</p>
+                  <div className="absolute right-0 mt-2 w-52 card-premium py-1 animate-slide-up border border-slate-200 shadow-premium-light">
+                    <div className="px-4 py-3 border-b border-slate-100">
+                      <p className="text-xs font-bold text-slate-800 truncate">{user?.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 tracking-wider">{user?.role} Profile</p>
                     </div>
                     <Link
                       to={dashboardUrl}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-textSecondaryDark hover:text-white hover:bg-white/10 body-light:hover:text-primary body-light:hover:bg-primary/5 transition-all"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
                     >
                       <LayoutDashboard className="w-4 h-4" /> Dashboard
                     </Link>
@@ -163,7 +138,7 @@ const Navbar = () => {
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMenuOpen(m => !m)}
-              className="md:hidden p-2 rounded-xl border border-borderDark hover:bg-white/5 text-textSecondaryDark hover:text-white transition-all body-light:border-borderLight body-light:text-textSecondaryLight"
+              className="md:hidden p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-900 transition-all"
               aria-label="Toggle Navigation Menu"
             >
               {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -174,12 +149,12 @@ const Navbar = () => {
         {/* Mobile menu panel */}
         {menuOpen && (
           <div className="md:hidden pb-4 animate-slide-up">
-            <div className="card-premium p-2 mt-2 space-y-1">
+            <div className="card-premium p-2 mt-2 space-y-1 border border-slate-200">
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="block px-4 py-2.5 rounded-lg text-sm font-semibold text-textSecondaryDark hover:text-white hover:bg-white/5 body-light:hover:text-primary body-light:hover:bg-primary/5 transition-all"
+                  className="block px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
                 >
                   {link.label}
                 </Link>
@@ -188,7 +163,7 @@ const Navbar = () => {
                 <>
                   <Link
                     to={dashboardUrl}
-                    className="block px-4 py-2.5 rounded-lg text-sm font-semibold text-textSecondaryDark hover:text-white hover:bg-white/5 body-light:hover:text-primary body-light:hover:bg-primary/5 transition-all"
+                    className="block px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
                   >
                     📊 Dashboard
                   </Link>

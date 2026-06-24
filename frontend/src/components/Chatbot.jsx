@@ -90,7 +90,7 @@ const Chatbot = () => {
       >
         {open ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
         {!open && pulse && (
-          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-accent rounded-full border-2 border-bgDark animate-pulse" />
+          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-accent rounded-full border-2 border-white animate-pulse" />
         )}
       </motion.button>
 

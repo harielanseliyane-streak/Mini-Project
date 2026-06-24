@@ -1,60 +1,77 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Heart, MapPin } from 'lucide-react';
 
-const CollegeCard = ({ college, onApply }) => {
+const CollegeCard = ({ college, onApply, isFavorited, onToggleFavorite }) => {
   const { user } = useAuth();
   const isStudent = user?.role === 'student';
 
-  const placementColor = college.placement_percent >= 90 ? 'text-emerald-400'
-    : college.placement_percent >= 75 ? 'text-amber-400' : 'text-slate-400';
+  const placementColor = college.placement_percent >= 90 ? 'text-emerald-500'
+    : college.placement_percent >= 75 ? 'text-amber-500' : 'text-slate-500';
 
   return (
-    <div className="glass-hover rounded-2xl overflow-hidden group flex flex-col">
+    <div className="card-premium flex flex-col relative group">
+      {/* Favorite Button (floating absolute top-right) */}
+      {isStudent && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFavorite?.();
+          }}
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 backdrop-blur-sm border border-slate-100 hover:bg-slate-50 shadow-sm transition-all duration-300 group-hover:scale-105"
+          aria-label="Add to Favorites"
+        >
+          <Heart 
+            className={`w-4 h-4 transition-colors ${
+              isFavorited ? 'fill-[#00a896] text-[#00a896]' : 'text-slate-400 hover:text-[#00a896]'
+            }`} 
+          />
+        </button>
+      )}
+
       {/* Card Header */}
-      <div className="relative p-5 pb-4 border-b border-white/10">
+      <div className="p-5 pb-4 border-b border-slate-100">
         <div className="flex items-start gap-4">
           {/* Logo */}
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {college.logo ? (
               <img src={`/uploads/logos/${college.logo}`} alt={college.college_name} className="w-full h-full object-cover" />
             ) : (
               <span className="text-2xl">🏛️</span>
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-heading font-semibold text-white text-base leading-snug line-clamp-2 group-hover:text-indigo-300 transition-colors">
+          <div className="flex-1 min-w-0 pr-8">
+            <h3 className="font-heading font-semibold text-slate-800 text-base leading-snug line-clamp-2 hover:text-primary transition-colors">
               {college.college_name}
             </h3>
-            <p className="text-slate-400 text-sm mt-1 flex items-center gap-1">
-              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
+            <p className="text-slate-500 text-sm mt-1 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               {college.city}, {college.state}
             </p>
           </div>
         </div>
 
-        {/* Accreditation badge */}
-        {college.accreditation && (
-          <span className="absolute top-4 right-4 text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">
+        {/* Accreditation badge (if no favorite button or positioned accordingly) */}
+        {college.accreditation && !isStudent && (
+          <span className="absolute top-4 right-4 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
             {college.accreditation}
           </span>
         )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 divide-x divide-white/10 border-b border-white/10">
+      <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 bg-slate-50/50">
         <div className="p-3 text-center">
-          <p className="text-xs text-slate-500 mb-1">Min Cutoff</p>
-          <p className="text-sm font-bold text-indigo-300">{college.min_cutoff ?? '—'}</p>
+          <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Min Cutoff</p>
+          <p className="text-sm font-bold text-primary">{college.min_cutoff ?? '—'}</p>
         </div>
         <div className="p-3 text-center">
-          <p className="text-xs text-slate-500 mb-1">Courses</p>
-          <p className="text-sm font-bold text-white">{college.course_count ?? '—'}</p>
+          <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Courses</p>
+          <p className="text-sm font-bold text-slate-700">{college.course_count ?? '—'}</p>
         </div>
         <div className="p-3 text-center">
-          <p className="text-xs text-slate-500 mb-1">Placement</p>
+          <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Placement</p>
           <p className={`text-sm font-bold ${placementColor}`}>
             {college.placement_percent ? `${college.placement_percent}%` : '—'}
           </p>
@@ -64,19 +81,23 @@ const CollegeCard = ({ college, onApply }) => {
       {/* Description */}
       {college.description && (
         <div className="px-5 py-3">
-          <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{college.description}</p>
+          <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">{college.description}</p>
         </div>
       )}
 
       {/* Actions */}
       <div className="p-4 pt-3 mt-auto flex gap-2">
-        <Link to={`/colleges/${college.id || college.user_id}`}
-          className="flex-1 text-center py-2 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all">
+        <Link 
+          to={`/colleges/${college.id || college.user_id}`}
+          className="flex-1 text-center py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-200/40 text-slate-800 transition-all"
+        >
           View Details
         </Link>
         {isStudent && (
-          <button onClick={() => onApply?.(college)}
-            className="flex-1 btn-primary text-sm py-2">
+          <button 
+            onClick={() => onApply?.(college)}
+            className="flex-1 btn-primary text-xs py-2.5 shadow-sm"
+          >
             Apply
           </button>
         )}

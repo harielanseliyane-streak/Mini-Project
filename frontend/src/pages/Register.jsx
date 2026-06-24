@@ -46,29 +46,29 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 pt-24">
-      <div className="fixed top-1/4 right-1/4 w-64 h-64 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
-      <div className="fixed bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
+      <div className="fixed top-1/4 right-1/4 w-64 h-64 rounded-full bg-purple/10 blur-3xl pointer-events-none" />
+      <div className="fixed bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-lg animate-slide-up">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
               <span className="text-xl">🎓</span>
             </div>
-            <span className="font-heading font-bold text-2xl text-white body-light:text-textPrimaryLight">InfoHub</span>
+            <span className="font-heading font-bold text-2xl text-slate-800">InfoHub</span>
           </Link>
-          <h1 className="font-heading text-3xl font-bold text-white body-light:text-textPrimaryLight">Create Account</h1>
-          <p className="text-slate-400 body-light:text-textSecondaryLight mt-2">Join the InfoHub community today</p>
+          <h1 className="font-heading text-3xl font-bold text-slate-800">Create Account</h1>
+          <p className="text-slate-500 mt-2">Join the InfoHub community today</p>
         </div>
 
-        <div className="glass rounded-2xl p-8 border border-white/10">
+        <div className="glass rounded-2xl p-8 border border-slate-200/80">
           {/* Role Toggle */}
-          <div className="flex p-1 bg-white/5 body-light:bg-black/5 rounded-xl mb-6 border border-white/10 body-light:border-black/5">
+          <div className="flex p-1 bg-black/5 rounded-xl mb-6 border border-black/5">
             {['student', 'college'].map(r => (
               <button key={r} onClick={() => setRole(r)}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-semibold capitalize transition-all duration-200 ${
-                  role === r ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-slate-400 hover:text-white body-light:text-textSecondaryLight body-light:hover:text-primary'
+                  role === r ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg' : 'text-slate-500 hover:text-primary'
                 }`}>
                 {r === 'student' ? '🎓 Student' : '🏛️ College'}
               </button>
@@ -103,7 +103,7 @@ const Register = () => {
                 <input type={showPw ? 'text' : 'password'} value={form.password} onChange={set('password')}
                   placeholder="Min 6 characters" className="input pr-12" />
                 <button type="button" onClick={() => setShowPw(p => !p)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-sm">
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary text-sm">
                   {showPw ? '🙈' : '👁️'}
                 </button>
               </div>
@@ -125,9 +125,9 @@ const Register = () => {
             </button>
           </form>
 
-          <p className="text-center text-slate-400 body-light:text-textSecondaryLight text-sm mt-6">
+          <p className="text-center text-slate-500 text-sm mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="text-indigo-400 body-light:text-indigo-600 hover:text-indigo-300 body-light:hover:text-indigo-500 font-medium">Sign in</Link>
+            <Link to="/login" className="text-primary hover:text-secondary font-medium transition-colors">Sign in</Link>
           </p>
         </div>
       </div>

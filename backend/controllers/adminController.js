@@ -2,6 +2,7 @@
 // Admin Controller (Prisma ORM)
 // ─────────────────────────────────────────────────────────────
 const prisma = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 // GET /api/admin/stats
 const getAdminStats = async (req, res) => {
@@ -109,4 +110,70 @@ const deleteReview = async (req, res) => {
   }
 };
 
-module.exports = { getAdminStats, getStudentsList, getCollegesList, broadcastNotification, deleteReview };
+// POST /api/admin/colleges
+const addCollegeByAdmin = async (req, res) => {
+  try {
+    const {
+      email,
+      password,
+      college_name,
+      phone,
+      address,
+      city,
+      state,
+      website,
+      established,
+      accreditation,
+      description
+    } = req.body;
+
+    if (!email || !password || !college_name) {
+      return res.status(400).json({ success: false, message: 'Email, password, and college name are required' });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Email is already registered' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const newCollege = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          role: 'college',
+          name: college_name,
+          email,
+          passwordHash,
+          phone: phone || null,
+        },
+      });
+
+      await tx.college.create({
+        data: {
+          userId: user.id,
+          collegeName: college_name,
+          address: address || null,
+          city: city || null,
+          state: state || null,
+          website: website || null,
+          established: established ? parseInt(established) : null,
+          accreditation: accreditation || null,
+          description: description || null,
+        },
+      });
+      
+      return user;
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'College created successfully',
+      college: { id: newCollege.id, name: newCollege.name, email: newCollege.email }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { getAdminStats, getStudentsList, getCollegesList, broadcastNotification, deleteReview, addCollegeByAdmin };

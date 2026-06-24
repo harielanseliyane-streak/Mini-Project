@@ -8,7 +8,7 @@ import {
 } from '../api';
 
 const TabBtn = ({ active, onClick, children }) => (
-  <button onClick={onClick} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${active ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+  <button onClick={onClick} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${active ? 'bg-primary/20 text-primary border border-primary/30' : 'text-slate-500 hover:text-primary hover:bg-slate-100'}`}>
     {children}
   </button>
 );
@@ -110,7 +110,7 @@ const CollegeDashboard = () => {
     catch { notify('❌ Update failed'); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center pt-16"><div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center pt-16"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
   const set = (setter) => (field) => (e) => setter(p => ({ ...p, [field]: e.target.value }));
   const inp = (val, onChange, placeholder, type = 'text') => (
@@ -124,16 +124,16 @@ const CollegeDashboard = () => {
         {/* Header */}
         <div className="flex items-center gap-5 mb-8">
           <label className="relative cursor-pointer">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center overflow-hidden">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden">
               {profile?.logo ? <img src={profile.logo} className="w-full h-full object-cover" alt="Logo" /> : <span className="text-2xl">🏛️</span>}
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-all rounded-2xl"><span className="text-white text-xs">📷</span></div>
             </div>
             <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
           </label>
           <div>
-            <h1 className="font-heading text-2xl font-bold text-white">{profile?.college_name}</h1>
-            <p className="text-slate-400 text-sm">{profile?.city}, {profile?.state}</p>
-            {profile?.accreditation && <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">{profile.accreditation}</span>}
+            <h1 className="font-heading text-2xl font-bold text-slate-800">{profile?.college_name}</h1>
+            <p className="text-slate-500 text-sm">{profile?.city}, {profile?.state}</p>
+            {profile?.accreditation && <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">{profile.accreditation}</span>}
           </div>
         </div>
 
@@ -150,7 +150,7 @@ const CollegeDashboard = () => {
         {tab === 'profile' && (
           <div className="glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-heading font-bold text-white text-lg">College Profile</h2>
+              <h2 className="font-heading font-bold text-slate-800 text-lg">College Profile</h2>
               <button onClick={() => setEditMode(m => !m)} className={editMode ? 'btn-danger text-sm px-3 py-1.5' : 'btn-secondary text-sm px-3 py-1.5'}>{editMode ? 'Cancel' : '✏️ Edit'}</button>
             </div>
             {editMode ? (
@@ -167,10 +167,10 @@ const CollegeDashboard = () => {
                 {[['🏛️ College','college_name'],['📍 City','city'],['🗺️ State','state'],['📧 Email','email'],['📞 Phone','phone'],['🌐 Website','website'],['🏆 Accreditation','accreditation']].map(([label, field]) => (
                   <div key={field} className="flex gap-3">
                     <span className="text-slate-500 text-sm w-36 flex-shrink-0">{label}</span>
-                    <span className="text-white text-sm break-all">{profile?.[field] || '—'}</span>
+                    <span className="text-slate-800 text-sm break-all">{profile?.[field] || '—'}</span>
                   </div>
                 ))}
-                <div className="md:col-span-2 flex gap-3"><span className="text-slate-500 text-sm w-36 flex-shrink-0">📝 Description</span><span className="text-white text-sm">{profile?.description || '—'}</span></div>
+                <div className="md:col-span-2 flex gap-3"><span className="text-slate-500 text-sm w-36 flex-shrink-0">📝 Description</span><span className="text-slate-800 text-sm">{profile?.description || '—'}</span></div>
               </div>
             )}
           </div>
@@ -180,7 +180,7 @@ const CollegeDashboard = () => {
         {tab === 'courses' && (
           <div className="space-y-6">
             <div className="glass rounded-2xl p-6">
-              <h2 className="font-heading font-bold text-white text-lg mb-5">Add Course</h2>
+              <h2 className="font-heading font-bold text-slate-800 text-lg mb-5">Add Course</h2>
               <form onSubmit={handleAddCourse} className="grid md:grid-cols-2 gap-4">
                 {[['Course Name','course_name','text',true],['Cutoff (out of 200)','cutoff','number',true],['Seats','seats','number',false],['Duration','duration','text',false],['Department','department','text',false],['Fee/Year (₹)','fee_per_year','number',false]].map(([label, field, type, req]) => (
                   <div key={field}><label className="label">{label}{req && <span className="text-red-400">*</span>}</label><input type={type} className="input" value={courseForm[field]} onChange={e => setCourseForm(p => ({ ...p, [field]: e.target.value }))} required={req} /></div>
@@ -190,17 +190,17 @@ const CollegeDashboard = () => {
             </div>
             <div className="glass rounded-2xl overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="border-b border-white/10 bg-white/5">
-                  <tr>{['Course','Dept','Cutoff','Seats','Fee/Year',''].map(h => <th key={h} className="text-left text-slate-400 font-medium px-4 py-3">{h}</th>)}</tr>
+                <thead className="border-b border-slate-200 bg-slate-50">
+                  <tr>{['Course','Dept','Cutoff','Seats','Fee/Year',''].map(h => <th key={h} className="text-left text-slate-500 font-medium px-4 py-3">{h}</th>)}</tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-100">
                   {profile?.courses?.map(c => (
-                    <tr key={c.id} className="hover:bg-white/5 transition-colors">
-                      <td className="px-4 py-3 text-white font-medium">{c.course_name}</td>
-                      <td className="px-4 py-3 text-slate-400">{c.department || '—'}</td>
-                      <td className="px-4 py-3 text-indigo-300 font-bold">{c.cutoff}</td>
-                      <td className="px-4 py-3 text-slate-300">{c.seats || '—'}</td>
-                      <td className="px-4 py-3 text-slate-300">{c.fee_per_year ? `₹${Number(c.fee_per_year).toLocaleString()}` : '—'}</td>
+                    <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 text-slate-800 font-medium">{c.course_name}</td>
+                      <td className="px-4 py-3 text-slate-500">{c.department || '—'}</td>
+                      <td className="px-4 py-3 text-primary font-bold">{c.cutoff}</td>
+                      <td className="px-4 py-3 text-slate-600">{c.seats || '—'}</td>
+                      <td className="px-4 py-3 text-slate-600">{c.fee_per_year ? `₹${Number(c.fee_per_year).toLocaleString()}` : '—'}</td>
                       <td className="px-4 py-3"><button onClick={() => handleDeleteCourse(c.id)} className="text-red-400 hover:text-red-300 transition-colors">🗑️</button></td>
                     </tr>
                   ))}
@@ -215,7 +215,7 @@ const CollegeDashboard = () => {
         {tab === 'posts' && (
           <div className="space-y-6">
             <div className="glass rounded-2xl p-6">
-              <h2 className="font-heading font-bold text-white text-lg mb-5">Create Post</h2>
+              <h2 className="font-heading font-bold text-slate-800 text-lg mb-5">Create Post</h2>
               <form onSubmit={handleCreatePost} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -236,8 +236,8 @@ const CollegeDashboard = () => {
                 <div key={p.id} className="glass rounded-xl p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 capitalize">{p.type}</span>
-                      <h3 className="font-semibold text-white mt-2">{p.title}</h3>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 capitalize">{p.type}</span>
+                      <h3 className="font-semibold text-slate-800 mt-2">{p.title}</h3>
                       {p.description && <p className="text-slate-400 text-sm mt-1 line-clamp-2">{p.description}</p>}
                       {p.media_url && p.media_type === 'image' && <img src={`/uploads/media/${p.media_url}`} className="mt-2 rounded-lg h-28 object-cover w-full" alt={p.title} />}
                     </div>
@@ -255,7 +255,7 @@ const CollegeDashboard = () => {
         {tab === 'events' && (
           <div className="space-y-6">
             <div className="glass rounded-2xl p-6">
-              <h2 className="font-heading font-bold text-white text-lg mb-5">Create Event</h2>
+              <h2 className="font-heading font-bold text-slate-800 text-lg mb-5">Create Event</h2>
               <form onSubmit={handleCreateEvent} className="grid md:grid-cols-2 gap-4">
                 {[['Event Name','name','text',true],['Date','event_date','date',true],['Location','location','text',false],['Max Participants','max_participants','number',false]].map(([label, field, type, req]) => (
                   <div key={field}><label className="label">{label}{req && <span className="text-red-400">*</span>}</label><input type={type} required={req} className="input" value={eventForm[field]} onChange={e => setEventForm(p => ({ ...p, [field]: e.target.value }))} /></div>
@@ -267,13 +267,13 @@ const CollegeDashboard = () => {
             <div className="grid md:grid-cols-2 gap-4">
               {profile?.events?.map(ev => (
                 <div key={ev.id} className="glass rounded-xl p-4">
-                  <h3 className="font-semibold text-white">{ev.name}</h3>
-                  <div className="flex gap-4 mt-2 text-xs text-slate-400">
+                  <h3 className="font-semibold text-slate-800">{ev.name}</h3>
+                  <div className="flex gap-4 mt-2 text-xs text-slate-500">
                     <span>📅 {new Date(ev.event_date).toLocaleDateString()}</span>
                     {ev.location && <span>📍 {ev.location}</span>}
                     {ev.max_participants && <span>👥 {ev.max_participants} max</span>}
                   </div>
-                  {ev.description && <p className="text-slate-400 text-sm mt-2 line-clamp-2">{ev.description}</p>}
+                  {ev.description && <p className="text-slate-500 text-sm mt-2 line-clamp-2">{ev.description}</p>}
                 </div>
               ))}
               {!profile?.events?.length && <p className="text-slate-500 col-span-2 text-center py-10">No events yet</p>}
@@ -285,7 +285,7 @@ const CollegeDashboard = () => {
         {tab === 'placements' && (
           <div className="space-y-6">
             <div className="glass rounded-2xl p-6">
-              <h2 className="font-heading font-bold text-white text-lg mb-5">Add Placement Record</h2>
+              <h2 className="font-heading font-bold text-slate-800 text-lg mb-5">Add Placement Record</h2>
               <form onSubmit={handleAddPlacement} className="grid md:grid-cols-2 gap-4">
                 {[['Year','year','number'],['Highest Package (LPA)','highest_package','number'],['Average Package (LPA)','average_package','number'],['Placement %','placement_percent','number']].map(([label, field, type]) => (
                   <div key={field}><label className="label">{label}</label><input type={type} className="input" value={placForm[field]} onChange={e => setPlacForm(p => ({ ...p, [field]: e.target.value }))} /></div>
@@ -298,14 +298,14 @@ const CollegeDashboard = () => {
               {profile?.placements?.map(pl => (
                 <div key={pl.id} className="glass rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="font-heading font-bold text-white text-lg">{pl.year}</span>
-                    <span className="text-emerald-400 font-semibold">{pl.placement_percent}% placed</span>
+                    <span className="font-heading font-bold text-slate-800 text-lg">{pl.year}</span>
+                    <span className="text-emerald-500 font-semibold">{pl.placement_percent}% placed</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Highest</p><p className="text-indigo-300 font-bold">{pl.highest_package} LPA</p></div>
-                    <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Average</p><p className="text-purple-300 font-bold">{pl.average_package} LPA</p></div>
+                    <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Highest</p><p className="text-primary font-bold">{pl.highest_package} LPA</p></div>
+                    <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Average</p><p className="text-secondary font-bold">{pl.average_package} LPA</p></div>
                   </div>
-                  {pl.top_recruiters && <p className="text-slate-400 text-xs mt-3">🏢 {pl.top_recruiters}</p>}
+                  {pl.top_recruiters && <p className="text-slate-500 text-xs mt-3">🏢 {pl.top_recruiters}</p>}
                 </div>
               ))}
               {!profile?.placements?.length && <p className="text-slate-500 col-span-2 text-center py-10">No placement records yet</p>}
@@ -317,7 +317,7 @@ const CollegeDashboard = () => {
         {tab === 'scholarships' && (
           <div className="space-y-6">
             <div className="glass rounded-2xl p-6">
-              <h2 className="font-heading font-bold text-white text-lg mb-5">Add Scholarship</h2>
+              <h2 className="font-heading font-bold text-slate-800 text-lg mb-5">Add Scholarship</h2>
               <form onSubmit={handleAddScholarship} className="grid md:grid-cols-2 gap-4">
                 {[['Name','name',true],['Amount (₹)','amount',false]].map(([label, field, req]) => (
                   <div key={field}><label className="label">{label}{req && <span className="text-red-400">*</span>}</label><input required={req} className="input" value={scholForm[field]} onChange={e => setScholForm(p => ({ ...p, [field]: e.target.value }))} /></div>
@@ -329,10 +329,10 @@ const CollegeDashboard = () => {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               {profile?.scholarships?.map(s => (
-                <div key={s.id} className="glass rounded-xl p-4 border border-amber-500/15">
-                  <h3 className="font-semibold text-white">{s.name}</h3>
-                  {s.amount && <p className="text-amber-400 font-bold mt-1">₹{Number(s.amount).toLocaleString()}/year</p>}
-                  {s.eligibility && <p className="text-slate-400 text-xs mt-2">{s.eligibility}</p>}
+                <div key={s.id} className="glass rounded-xl p-4 border border-slate-200">
+                  <h3 className="font-semibold text-slate-800">{s.name}</h3>
+                  {s.amount && <p className="text-secondary font-bold mt-1">₹{Number(s.amount).toLocaleString()}/year</p>}
+                  {s.eligibility && <p className="text-slate-500 text-xs mt-2">{s.eligibility}</p>}
                 </div>
               ))}
               {!profile?.scholarships?.length && <p className="text-slate-500 col-span-2 text-center py-10">No scholarships added yet</p>}
@@ -343,16 +343,16 @@ const CollegeDashboard = () => {
         {/* ── APPLICATIONS ── */}
         {tab === 'applications' && (
           <div>
-            <h2 className="font-heading font-bold text-white text-xl mb-5">Student Applications ({applications.length})</h2>
+            <h2 className="font-heading font-bold text-slate-800 text-xl mb-5">Student Applications ({applications.length})</h2>
             {applications.length === 0 ? (
-              <div className="glass rounded-2xl p-10 text-center text-slate-400"><span className="text-4xl block mb-3">📋</span>No applications yet</div>
+              <div className="glass rounded-2xl p-10 text-center text-slate-450"><span className="text-4xl block mb-3">📋</span>No applications yet</div>
             ) : (
               <div className="space-y-3">
                 {applications.map(app => (
                   <div key={app.id} className="glass rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
                     <div>
-                      <h3 className="font-semibold text-white">{app.student_name}</h3>
-                      <p className="text-slate-400 text-sm">{app.student_email} · {app.student_phone}</p>
+                      <h3 className="font-semibold text-slate-800">{app.student_name}</h3>
+                      <p className="text-slate-500 text-sm">{app.student_email} · {app.student_phone}</p>
                       <div className="flex gap-4 mt-1.5 text-xs text-slate-500">
                         <span>📚 {app.course_name || 'General'}</span>
                         {app.hsc_marks && <span>HSC: {app.hsc_marks}%</span>}
