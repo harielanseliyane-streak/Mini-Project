@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['pwa-icon.svg', 'college-bg.png'],
+      includeAssets: ['android-192x192.png', 'android-512x512.png'],
       manifest: {
         name: 'InfoHub',
         short_name: 'InfoHub',
@@ -20,13 +20,13 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'android-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'android-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
