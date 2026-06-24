@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info, User, Edit2, Loader2 } from 'lucide-react';
 import Logo from './Logo';
 import { getStudentProfile, updateStudentProfile, getCollegeProfile, updateCollegeProfile } from '../api';
+import InstallButton from './InstallButton';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, updateUser } = useAuth();
@@ -272,6 +273,9 @@ const Navbar = () => {
 
           {/* Controls & User drop down */}
           <div className="flex items-center gap-3">
+            <div className="hidden sm:block">
+              <InstallButton />
+            </div>
             {isAuthenticated ? (
               <div className="relative" ref={profileRef}>
                 <button
@@ -321,13 +325,18 @@ const Navbar = () => {
             )}
 
             {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMenuOpen(m => !m)}
-              className="md:hidden p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-900 transition-all"
-              aria-label="Toggle Navigation Menu"
-            >
-              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </button>
+            <div className="md:hidden flex items-center gap-2">
+              <div className="sm:hidden block">
+                <InstallButton />
+              </div>
+              <button
+                onClick={() => setMenuOpen(m => !m)}
+                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-900 transition-all"
+                aria-label="Toggle Navigation Menu"
+              >
+                {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         </div>
 
