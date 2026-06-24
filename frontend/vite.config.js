@@ -19,15 +19,19 @@ export default defineConfig({
         icons: [
           {
             src: 'pwa-icon.svg',
-            sizes: '192x192',
+            sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable'
           },
           {
-            src: 'pwa-icon.svg',
+            src: 'college-bg-teal.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'college-bg-teal.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/png'
           }
         ]
       },
