@@ -8,7 +8,7 @@ router.use(authorize('student'));
 
 router.get('/profile',          ctrl.getProfile);
 router.put('/profile',          ctrl.updateProfile);
-router.post('/profile/photo',   upload.single('profile_photo'), ctrl.uploadPhoto);
+router.post('/profile/photo',   upload.uploadAndStore('profile_photo'), ctrl.uploadPhoto);
 router.get('/colleges',         ctrl.getColleges);
 router.get('/colleges/:id',     ctrl.getCollegeById);
 router.get('/recommendations',  ctrl.getRecommendations);

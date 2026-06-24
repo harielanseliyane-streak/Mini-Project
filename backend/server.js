@@ -31,8 +31,18 @@ const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 // ── Middleware ──────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL || 'http://localhost:5173',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Vercel SSR)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET','POST','PUT','DELETE','PATCH'],
   allowedHeaders: ['Content-Type','Authorization'],
@@ -79,11 +89,13 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
-// ── Start Server ────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🚀 InfoHub API running on http://localhost:${PORT}`);
-  console.log(`📁 Uploads served at  http://localhost:${PORT}/uploads`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
-});
+// ── Start Server (local dev only; Vercel runs as serverless) ──
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 InfoHub API running on http://localhost:${PORT}`);
+    console.log(`📁 Uploads served at  http://localhost:${PORT}/uploads`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+  });
+}
 
 module.exports = app;

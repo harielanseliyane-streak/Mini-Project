@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  // Local dev proxy – NOT used in Vercel production (VITE_API_URL handles that)
   server: {
     port: 5173,
     proxy: {
@@ -15,5 +16,11 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  build: {
+    outDir: 'dist',
+    // Ensure assets are correctly referenced from the root
+    assetsDir: 'assets',
+    sourcemap: false,
   },
 })

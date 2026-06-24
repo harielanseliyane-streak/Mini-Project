@@ -1,32 +1,14 @@
 // ─────────────────────────────────────────────────────────────
-// Multer File Upload Middleware
+// Multer + Cloudinary Upload Middleware
+// Vercel-compatible: uses memoryStorage (no local disk writes)
 // ─────────────────────────────────────────────────────────────
-const multer = require('multer');
-const path   = require('path');
-const fs     = require('fs');
+const multer     = require('multer');
+const path       = require('path');
+const cloudinary = require('../config/cloudinary');
+const { Readable } = require('stream');
 
-// Ensure sub-directories exist
-const ensureDir = (dir) => { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); };
-
-// ── Storage engine ──────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let folder = 'general';
-    if (file.fieldname === 'profile_photo') folder = 'profiles';
-    else if (file.fieldname === 'logo')     folder = 'logos';
-    else if (file.fieldname === 'media')    folder = 'media';
-    else if (file.fieldname === 'poster')   folder = 'posters';
-
-    const uploadPath = path.join(__dirname, '..', 'uploads', folder);
-    ensureDir(uploadPath);
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-  },
-});
+// ── In-memory storage (Vercel filesystem is read-only) ───────
+const storage = multer.memoryStorage();
 
 // ── File filter ─────────────────────────────────────────────
 const fileFilter = (req, file, cb) => {
@@ -42,11 +24,66 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// ── Multer instances ────────────────────────────────────────
+// ── Multer instance ─────────────────────────────────────────
 const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024 }, // 10MB
 });
+
+// ── Helper: upload buffer to Cloudinary ─────────────────────
+const uploadToCloudinary = (buffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+    Readable.from(buffer).pipe(stream);
+  });
+};
+
+// ── Map fieldname → Cloudinary folder ───────────────────────
+const folderMap = {
+  profile_photo: 'infohub/profiles',
+  logo:          'infohub/logos',
+  media:         'infohub/media',
+  poster:        'infohub/posters',
+};
+
+/**
+ * Middleware factory that:
+ *  1. Runs multer (in-memory)
+ *  2. Uploads req.file.buffer → Cloudinary
+ *  3. Attaches req.file.cloudinaryUrl & req.file.cloudinaryPublicId
+ */
+const uploadAndStore = (fieldname) => [
+  upload.single(fieldname),
+  async (req, res, next) => {
+    if (!req.file) return next();
+    try {
+      const folder = folderMap[fieldname] || 'infohub/general';
+      const ext    = path.extname(req.file.originalname).toLowerCase();
+      const resourceType = ['.mp4', '.webm', '.mov', '.avi'].includes(ext) ? 'video' : 'image';
+
+      const result = await uploadToCloudinary(req.file.buffer, {
+        folder,
+        resource_type: resourceType,
+      });
+
+      // Attach Cloudinary result to req.file so controllers can use it
+      req.file.cloudinaryUrl      = result.secure_url;
+      req.file.cloudinaryPublicId = result.public_id;
+      req.file.filename           = result.secure_url; // backward-compat shim
+
+      next();
+    } catch (err) {
+      next(err);
+    }
+  },
+];
+
+// ── Export both the raw multer instance (for manual use)
+//    AND the uploadAndStore factory ──────────────────────────
+upload.uploadAndStore = uploadAndStore;
 
 module.exports = upload;

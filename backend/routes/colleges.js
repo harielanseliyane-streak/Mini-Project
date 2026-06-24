@@ -60,13 +60,13 @@ router.get('/search', async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 router.get('/profile',             authenticate, authorize('college'), ctrl.getProfile);
 router.put('/profile',             authenticate, authorize('college'), ctrl.updateProfile);
-router.post('/logo',               authenticate, authorize('college'), upload.single('logo'), ctrl.uploadLogo);
+router.post('/logo',               authenticate, authorize('college'), upload.uploadAndStore('logo'), ctrl.uploadLogo);
 router.post('/courses',            authenticate, authorize('college'), ctrl.addCourse);
 router.put('/courses/:id',         authenticate, authorize('college'), ctrl.updateCourse);
 router.delete('/courses/:id',      authenticate, authorize('college'), ctrl.deleteCourse);
-router.post('/posts',              authenticate, authorize('college'), upload.single('media'), ctrl.createPost);
+router.post('/posts',              authenticate, authorize('college'), upload.uploadAndStore('media'), ctrl.createPost);
 router.delete('/posts/:id',        authenticate, authorize('college'), ctrl.deletePost);
-router.post('/events',             authenticate, authorize('college'), upload.single('poster'), ctrl.createEvent);
+router.post('/events',             authenticate, authorize('college'), upload.uploadAndStore('poster'), ctrl.createEvent);
 router.post('/placements',         authenticate, authorize('college'), ctrl.addPlacement);
 router.post('/scholarships',       authenticate, authorize('college'), ctrl.addScholarship);
 router.get('/applications',        authenticate, authorize('college'), ctrl.getApplications);

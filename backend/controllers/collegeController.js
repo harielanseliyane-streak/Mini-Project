@@ -2,7 +2,6 @@
 // College Controller (Prisma ORM)
 // ─────────────────────────────────────────────────────────────
 const prisma = require('../config/db');
-const path = require('path');
 
 // GET /api/colleges/profile
 const getProfile = async (req, res) => {
@@ -105,12 +104,13 @@ const uploadLogo = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
 
+    const url = req.file.cloudinaryUrl;
+
     await prisma.college.update({
       where: { userId: req.user.id },
-      data: { logo: req.file.filename },
+      data: { logo: url },
     });
 
-    const url = `${req.protocol}://${req.get('host')}/uploads/logos/${req.file.filename}`;
     return res.json({ success: true, url });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -197,7 +197,7 @@ const createEvent = async (req, res) => {
     }
 
     let poster_url = null;
-    if (req.file) poster_url = req.file.filename;
+    if (req.file) poster_url = req.file.cloudinaryUrl;
 
     const event = await prisma.event.create({
       data: {
@@ -356,7 +356,7 @@ const createPost = async (req, res) => {
     if (!title) return res.status(400).json({ success: false, message: 'Title is required' });
 
     let media_url = null;
-    if (req.file) media_url = req.file.filename;
+    if (req.file) media_url = req.file.cloudinaryUrl;
 
     const [result] = await prisma.query(
       'INSERT INTO posts (college_id, type, title, description, media_url, media_type) VALUES (?, ?, ?, ?, ?, ?)',

@@ -2,7 +2,6 @@
 // Student Controller (Prisma ORM)
 // ─────────────────────────────────────────────────────────────
 const prisma = require('../config/db');
-const path = require('path');
 
 // GET /api/students/profile
 const getProfile = async (req, res) => {
@@ -37,7 +36,10 @@ const getProfile = async (req, res) => {
     };
 
     if (student.profile_photo) {
-      student.profile_photo_url = `${req.protocol}://${req.get('host')}/uploads/profiles/${path.basename(student.profile_photo)}`;
+      // profile_photo now stores the full Cloudinary URL
+      student.profile_photo_url = student.profile_photo.startsWith('http')
+        ? student.profile_photo
+        : `${req.protocol}://${req.get('host')}/uploads/profiles/${student.profile_photo}`;
     }
 
     return res.json({ success: true, student });
@@ -101,14 +103,15 @@ const uploadPhoto = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
 
+    const url = req.file.cloudinaryUrl;
+
     await prisma.student.update({
       where: { userId: req.user.id },
       data: {
-        profilePhoto: req.file.filename,
+        profilePhoto: url,
       },
     });
 
-    const url = `${req.protocol}://${req.get('host')}/uploads/profiles/${req.file.filename}`;
     return res.json({ success: true, message: 'Photo uploaded', url });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
