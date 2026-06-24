@@ -36,7 +36,7 @@ const CollegeCard = ({ college, onApply, isFavorited, onToggleFavorite }) => {
           {/* Logo */}
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {college.logo ? (
-              <img src={`/uploads/logos/${college.logo}`} alt={college.college_name} className="w-full h-full object-cover" />
+              <img src={college.logo.startsWith('http') ? college.logo : `/uploads/logos/${college.logo}`} alt={college.college_name} className="w-full h-full object-cover" />
             ) : (
               <span className="text-2xl">🏛️</span>
             )}

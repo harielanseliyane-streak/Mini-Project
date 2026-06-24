@@ -34,7 +34,7 @@ const CollegeDetail = () => {
   if (!college) return <div className="min-h-screen flex items-center justify-center pt-16 text-slate-400">College not found.</div>;
 
   const mediaPosts = college.posts?.filter(p => p.media_url) || [];
-  const mediaItems = mediaPosts.map(p => ({ url: `/uploads/media/${p.media_url}`, type: p.media_type, title: p.title }));
+  const mediaItems = mediaPosts.map(p => ({ url: p.media_url?.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`, type: p.media_type, title: p.title }));
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4">
@@ -44,7 +44,7 @@ const CollegeDetail = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10" />
           <div className="relative flex flex-wrap items-start gap-6">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-slate-200/80 flex items-center justify-center text-4xl">
-              {college.logo ? <img src={`/uploads/logos/${college.logo}`} className="w-full h-full object-cover rounded-2xl" alt="logo" /> : '🏛️'}
+              {college.logo ? <img src={college.logo.startsWith('http') ? college.logo : `/uploads/logos/${college.logo}`} className="w-full h-full object-cover rounded-2xl" alt="logo" /> : '🏛️'}
             </div>
             <div className="flex-1">
               <div className="flex flex-wrap gap-2 mb-2">
@@ -159,7 +159,7 @@ const CollegeDetail = () => {
                 <h3 className="font-semibold text-slate-800">{p.title}</h3>
                 {p.description && <p className="text-slate-500 text-sm mt-1">{p.description}</p>}
                 {p.media_url && p.media_type === 'image' && (
-                  <img src={`/uploads/media/${p.media_url}`} className="mt-3 rounded-xl h-40 object-cover w-full cursor-pointer" onClick={() => setViewer({ items: [{ url: `/uploads/media/${p.media_url}`, type: 'image', title: p.title }], index: 0 })} alt={p.title} />
+                  <img src={p.media_url?.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`} className="mt-3 rounded-xl h-40 object-cover w-full cursor-pointer" onClick={() => setViewer({ items: [{ url: p.media_url?.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`, type: 'image', title: p.title }], index: 0 })} alt={p.title} />
                 )}
               </div>
             ))}

@@ -97,7 +97,7 @@ const CompareColleges = () => {
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-200 flex items-center justify-center text-2xl font-bold text-primary flex-shrink-0">
                       {c.logo ? (
-                        <img src={`${window.location.protocol}//${window.location.host}/uploads/logos/${c.logo}`} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                        <img src={c.logo.startsWith('http') ? c.logo : `/uploads/logos/${c.logo}`} alt="Logo" className="w-full h-full object-cover rounded-xl" />
                       ) : (
                         c.college_name[0]
                       )}

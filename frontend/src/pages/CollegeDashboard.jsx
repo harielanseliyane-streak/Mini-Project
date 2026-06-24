@@ -125,7 +125,7 @@ const CollegeDashboard = () => {
         <div className="flex items-center gap-5 mb-8">
           <label className="relative cursor-pointer">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden">
-              {profile?.logo ? <img src={profile.logo} className="w-full h-full object-cover" alt="Logo" /> : <span className="text-2xl">🏛️</span>}
+              {profile?.logo ? <img src={profile.logo.startsWith('http') ? profile.logo : `/uploads/logos/${profile.logo}`} className="w-full h-full object-cover" alt="Logo" /> : <span className="text-2xl">🏛️</span>}
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-all rounded-2xl"><span className="text-white text-xs">📷</span></div>
             </div>
             <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
@@ -239,7 +239,7 @@ const CollegeDashboard = () => {
                       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 capitalize">{p.type}</span>
                       <h3 className="font-semibold text-slate-800 mt-2">{p.title}</h3>
                       {p.description && <p className="text-slate-400 text-sm mt-1 line-clamp-2">{p.description}</p>}
-                      {p.media_url && p.media_type === 'image' && <img src={`/uploads/media/${p.media_url}`} className="mt-2 rounded-lg h-28 object-cover w-full" alt={p.title} />}
+                      {p.media_url && p.media_type === 'image' && <img src={p.media_url.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`} className="mt-2 rounded-lg h-28 object-cover w-full" alt={p.title} />}
                     </div>
                     <button onClick={() => deletePost(p.id).then(() => setProfile(pr => ({ ...pr, posts: pr.posts.filter(x => x.id !== p.id) })))} className="text-red-400 hover:text-red-300 ml-2">🗑️</button>
                   </div>

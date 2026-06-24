@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -20,10 +20,10 @@ model User {
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
-  student      Student?
-  college      College?
+  student       Student?
+  college       College?
   notifications Notification[]
-  activityLogs ActivityLog[]
+  activityLogs  ActivityLog[]
 
   @@map("users")
 }
@@ -35,23 +35,23 @@ model Student {
   userId            Int               @id @map("user_id")
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   hscMarks          Float?            @map("hsc_marks")
-  cutoff            Float?            @map("cutoff")
+  cutoff            Float?
   profilePhoto      String?           @map("profile_photo")
   bio               String?
-  interests         String?           // Comma-separated or stringified JSON
-  skills            String?           // Comma-separated or stringified JSON
+  interests         String?
+  skills            String?
   careerGoals       String?           @map("career_goals")
   locationPref      String?           @map("location_pref")
   budgetPref        Float?            @map("budget_pref")
   coursePref        String?           @map("course_pref")
 
-  applications      Application[]
+  applications       Application[]
   eventRegistrations EventRegistration[]
-  reviews           Review[]
-  ratings           Rating[]
-  quizResults       QuizResult[]
-  aiRecommendations AIRecommendation[]
-  savedItems        SavedItem[]
+  reviews            Review[]
+  ratings            Rating[]
+  quizResults        QuizResult[]
+  aiRecommendations  AIRecommendation[]
+  savedItems         SavedItem[]
 
   @@map("students")
 }
@@ -63,25 +63,26 @@ model College {
   userId         Int             @id @map("user_id")
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   collegeName    String          @map("college_name")
-  address        String?         @db.Text
+  address        String?
   city           String?
   state          String?
-  website        String?         @db.VarChar(500)
-  logo           String?         @db.VarChar(500)
-  description    String?         @db.Text
+  website        String?
+  logo           String?
+  description    String?
   established    Int?
   accreditation  String?
-  infrastructure String?         @db.Text
-  hostelInfo     String?         @db.Text @map("hostel_info")
-  feeStructure   String?         @db.Text @map("fee_structure")
+  infrastructure String?
+  hostelInfo     String?         @map("hostel_info")
+  feeStructure   String?         @map("fee_structure")
 
-  courses        Course[]
-  events         Event[]
-  scholarships   Scholarship[]
-  placements     PlacementData[]
-  applications   Application[]
-  reviews        Review[]
-  ratings        Rating[]
+  courses      Course[]
+  events       Event[]
+  scholarships Scholarship[]
+  placements   PlacementData[]
+  applications Application[]
+  reviews      Review[]
+  ratings      Rating[]
+  posts        Post[]
 
   @@map("colleges")
 }
@@ -96,7 +97,7 @@ model Course {
   courseName   String        @map("course_name")
   cutoff       Float
   seats        Int?
-  duration     String?       // e.g. "4 Years"
+  duration     String?
   department   String?
   feePerYear   Float?        @map("fee_per_year")
   createdAt    DateTime      @default(now()) @map("created_at")
@@ -107,29 +108,46 @@ model Course {
 }
 
 // ─────────────────────────────────────────
-// 5. EVENTS / SYMPOSIUMS
+// 5. POSTS (college feed / announcements)
+// ─────────────────────────────────────────
+model Post {
+  id          Int      @id @default(autoincrement())
+  collegeId   Int      @map("college_id")
+  college     College  @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
+  type        String   @default("general")
+  title       String
+  description String?
+  mediaUrl    String?  @map("media_url")
+  mediaType   String?  @default("none") @map("media_type")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("posts")
+}
+
+// ─────────────────────────────────────────
+// 6. EVENTS / SYMPOSIUMS
 // ─────────────────────────────────────────
 model Event {
-  id                  Int                 @id @default(autoincrement())
-  collegeId           Int                 @map("college_id")
-  college             College             @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
-  name                String
-  description         String?             @db.Text
-  eventDate           DateTime            @map("event_date")
-  location            String?
-  posterUrl           String?             @db.VarChar(500) @map("poster_url")
-  registrationDeadline DateTime?          @map("registration_deadline")
-  maxParticipants     Int?                @map("max_participants")
-  createdAt           DateTime            @default(now()) @map("created_at")
+  id                   Int                 @id @default(autoincrement())
+  collegeId            Int                 @map("college_id")
+  college              College             @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
+  name                 String
+  description          String?
+  eventDate            DateTime            @map("event_date")
+  location             String?
+  posterUrl            String?             @map("poster_url")
+  registrationDeadline DateTime?           @map("registration_deadline")
+  maxParticipants      Int?                @map("max_participants")
+  createdAt            DateTime            @default(now()) @map("created_at")
 
-  registrations       EventRegistration[]
-  applications        Application[]
+  registrations EventRegistration[]
+  applications  Application[]
 
   @@map("events")
 }
 
 // ─────────────────────────────────────────
-// 6. EVENT REGISTRATION TRACKER
+// 7. EVENT REGISTRATION TRACKER
 // ─────────────────────────────────────────
 model EventRegistration {
   id           Int      @id @default(autoincrement())
@@ -144,46 +162,46 @@ model EventRegistration {
 }
 
 // ─────────────────────────────────────────
-// 7. SCHOLARSHIPS
+// 8. SCHOLARSHIPS
 // ─────────────────────────────────────────
 model Scholarship {
-  id          Int      @id @default(autoincrement())
-  collegeId   Int?     @map("college_id")
-  college     College? @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
-  type        String   @default("private") // 'government' | 'private' | 'international'
+  id          Int       @id @default(autoincrement())
+  collegeId   Int?      @map("college_id")
+  college     College?  @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
+  type        String    @default("private")
   name        String
-  description String?  @db.Text
+  description String?
   amount      Float?
-  eligibility String?  @db.Text
+  eligibility String?
   deadline    DateTime?
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   @@map("scholarships")
 }
 
 // ─────────────────────────────────────────
-// 8. INTERNSHIPS
+// 9. INTERNSHIPS
 // ─────────────────────────────────────────
 model Internship {
   id             Int           @id @default(autoincrement())
   companyName    String        @map("company_name")
   title          String
-  description    String?       @db.Text
+  description    String?
   stipend        Float?
-  duration       String?       // e.g. "3 months"
+  duration       String?
   location       String?
-  eligibility    String?       @db.Text
-  skillsRequired String?       @map("skills_required") // Comma-separated values
+  eligibility    String?
+  skillsRequired String?       @map("skills_required")
   deadline       DateTime?
   createdAt      DateTime      @default(now()) @map("created_at")
 
-  applications   Application[]
+  applications Application[]
 
   @@map("internships")
 }
 
 // ─────────────────────────────────────────
-// 9. ADMISSIONS & INTERNSHIP APPLICATIONS
+// 10. ADMISSIONS & INTERNSHIP APPLICATIONS
 // ─────────────────────────────────────────
 model Application {
   id           Int         @id @default(autoincrement())
@@ -193,13 +211,13 @@ model Application {
   college      College     @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
   courseId     Int?        @map("course_id")
   course       Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  type         String      @default("admission") // 'admission' | 'internship' | 'event'
+  type         String      @default("admission")
   eventId      Int?        @map("event_id")
   event        Event?      @relation(fields: [eventId], references: [id], onDelete: SetNull)
   internshipId Int?        @map("internship_id")
   internship   Internship? @relation(fields: [internshipId], references: [id], onDelete: SetNull)
-  status       String      @default("pending") // 'pending' | 'accepted' | 'rejected'
-  message      String?     @db.Text
+  status       String      @default("pending")
+  message      String?
   appliedAt    DateTime    @default(now()) @map("applied_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
@@ -207,7 +225,7 @@ model Application {
 }
 
 // ─────────────────────────────────────────
-// 10. REVIEWS
+// 11. REVIEWS
 // ─────────────────────────────────────────
 model Review {
   id        Int      @id @default(autoincrement())
@@ -215,7 +233,7 @@ model Review {
   student   Student  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
   collegeId Int      @map("college_id")
   college   College  @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
-  content   String   @db.Text
+  content   String
   rating    Int      @default(5)
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -223,7 +241,7 @@ model Review {
 }
 
 // ─────────────────────────────────────────
-// 11. RATINGS
+// 12. RATINGS
 // ─────────────────────────────────────────
 model Rating {
   id        Int     @id @default(autoincrement())
@@ -237,14 +255,14 @@ model Rating {
 }
 
 // ─────────────────────────────────────────
-// 12. NOTIFICATIONS
+// 13. NOTIFICATIONS
 // ─────────────────────────────────────────
 model Notification {
   id        Int      @id @default(autoincrement())
   userId    Int      @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
-  message   String   @db.Text
+  message   String
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -252,7 +270,7 @@ model Notification {
 }
 
 // ─────────────────────────────────────────
-// 13. QUIZ RESULTS
+// 14. QUIZ RESULTS
 // ─────────────────────────────────────────
 model QuizResult {
   id              Int      @id @default(autoincrement())
@@ -261,55 +279,55 @@ model QuizResult {
   careerPath      String   @map("career_path")
   personality     String
   aptitudeScore   Float    @map("aptitude_score")
-  interestMapping String?  @db.Text @map("interest_mapping") // stringified JSON
-  skillsAnalysis  String?  @db.Text @map("skills_analysis")  // stringified JSON
-  recommendations String?  @db.Text
+  interestMapping String?  @map("interest_mapping")
+  skillsAnalysis  String?  @map("skills_analysis")
+  recommendations String?
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@map("quiz_results")
 }
 
 // ─────────────────────────────────────────
-// 14. PLACEMENT RECORD
+// 15. PLACEMENT RECORD
 // ─────────────────────────────────────────
 model PlacementData {
   id               Int      @id @default(autoincrement())
   collegeId        Int      @map("college_id")
   college          College  @relation(fields: [collegeId], references: [userId], onDelete: Cascade)
   year             Int
-  highestPackage   Float?   @map("highest_package") // LPA
-  averagePackage   Float?   @map("average_package") // LPA
+  highestPackage   Float?   @map("highest_package")
+  averagePackage   Float?   @map("average_package")
   placementPercent Float?   @map("placement_percent")
-  topRecruiters    String?  @db.Text @map("top_recruiters") // comma-separated
-  description      String?  @db.Text
+  topRecruiters    String?  @map("top_recruiters")
+  description      String?
   createdAt        DateTime @default(now()) @map("created_at")
 
   @@map("placements")
 }
 
 // ─────────────────────────────────────────
-// 15. AI RECOMMENDATIONS
+// 16. AI RECOMMENDATIONS
 // ─────────────────────────────────────────
 model AIRecommendation {
   id           Int      @id @default(autoincrement())
   studentId    Int      @map("student_id")
   student      Student  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
-  colleges     String?  @db.Text // stringified JSON
-  scholarships String?  @db.Text // stringified JSON
-  careers      String?  @db.Text // stringified JSON
+  colleges     String?
+  scholarships String?
+  careers      String?
   generatedAt  DateTime @default(now()) @map("generated_at")
 
   @@map("ai_recommendations")
 }
 
 // ─────────────────────────────────────────
-// 16. SAVED ITEMS
+// 17. SAVED ITEMS
 // ─────────────────────────────────────────
 model SavedItem {
   id        Int      @id @default(autoincrement())
   studentId Int      @map("student_id")
   student   Student  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
-  type      String   // 'college' | 'scholarship' | 'internship' | 'event'
+  type      String
   itemId    Int      @map("item_id")
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -318,14 +336,14 @@ model SavedItem {
 }
 
 // ─────────────────────────────────────────
-// 17. ACTIVITY LOGS
+// 18. ACTIVITY LOGS
 // ─────────────────────────────────────────
 model ActivityLog {
   id        Int      @id @default(autoincrement())
   userId    Int      @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   action    String
-  details   String?  @db.Text
+  details   String?
   timestamp DateTime @default(now())
 
   @@map("activity_logs")

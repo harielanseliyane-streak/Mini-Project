@@ -1,12 +1,14 @@
 // ─────────────────────────────────────────────────────────────
-// Cloudinary Configuration
+// Supabase Storage Configuration
+// This file replaces the old cloudinary.js
+// Bucket names mirror the old Cloudinary folder structure
 // ─────────────────────────────────────────────────────────────
-const cloudinary = require('cloudinary').v2;
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const BUCKETS = {
+  profile_photo: 'profiles',
+  logo:          'logos',
+  media:         'media',
+  poster:        'posters',
+};
 
-module.exports = cloudinary;
+module.exports = { BUCKETS };

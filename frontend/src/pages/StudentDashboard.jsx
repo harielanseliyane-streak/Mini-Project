@@ -455,7 +455,7 @@ const StudentDashboard = () => {
                       <div className="flex items-start gap-4 mb-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center text-xl flex-shrink-0">
                           {item.details?.logo ? (
-                            <img src={`/uploads/logos/${item.details.logo}`} alt={item.details.collegeName} className="w-full h-full object-cover" />
+                            <img src={item.details.logo.startsWith('http') ? item.details.logo : `/uploads/logos/${item.details.logo}`} alt={item.details.collegeName} className="w-full h-full object-cover" />
                           ) : (
                             <span>🏛️</span>
                           )}

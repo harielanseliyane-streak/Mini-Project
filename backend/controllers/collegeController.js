@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// College Controller (Prisma ORM)
+// College Controller (Prisma ORM – Supabase PostgreSQL)
 // ─────────────────────────────────────────────────────────────
 const prisma = require('../config/db');
 
@@ -78,17 +78,17 @@ const updateProfile = async (req, res) => {
       await tx.college.update({
         where: { userId: req.user.id },
         data: {
-          collegeName: college_name !== undefined ? college_name : undefined,
-          address: address !== undefined ? address : undefined,
-          city: city !== undefined ? city : undefined,
-          state: state !== undefined ? state : undefined,
-          website: website !== undefined ? website : undefined,
-          description: description !== undefined ? description : undefined,
-          established: established !== undefined ? (established ? parseInt(established) : null) : undefined,
-          accreditation: accreditation !== undefined ? accreditation : undefined,
-          infrastructure: infrastructure !== undefined ? infrastructure : undefined,
-          hostelInfo: hostel_info !== undefined ? hostel_info : undefined,
-          feeStructure: fee_structure !== undefined ? fee_structure : undefined,
+          collegeName:    college_name    !== undefined ? college_name    : undefined,
+          address:        address         !== undefined ? address         : undefined,
+          city:           city            !== undefined ? city            : undefined,
+          state:          state           !== undefined ? state           : undefined,
+          website:        website         !== undefined ? website         : undefined,
+          description:    description     !== undefined ? description     : undefined,
+          established:    established     !== undefined ? (established ? parseInt(established) : null) : undefined,
+          accreditation:  accreditation   !== undefined ? accreditation   : undefined,
+          infrastructure: infrastructure  !== undefined ? infrastructure  : undefined,
+          hostelInfo:     hostel_info     !== undefined ? hostel_info     : undefined,
+          feeStructure:   fee_structure   !== undefined ? fee_structure   : undefined,
         },
       });
     });
@@ -104,7 +104,7 @@ const uploadLogo = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
 
-    const url = req.file.cloudinaryUrl;
+    const url = req.file.cloudinaryUrl; // Supabase public URL (backward-compat field)
 
     await prisma.college.update({
       where: { userId: req.user.id },
@@ -127,13 +127,13 @@ const addCourse = async (req, res) => {
 
     const course = await prisma.course.create({
       data: {
-        collegeId: req.user.id,
+        collegeId:  req.user.id,
         courseName: course_name,
-        cutoff: parseFloat(cutoff),
-        seats: seats ? parseInt(seats) : null,
-        duration: duration || null,
+        cutoff:     parseFloat(cutoff),
+        seats:      seats      ? parseInt(seats)              : null,
+        duration:   duration   || null,
         department: department || null,
-        feePerYear: fee_per_year ? parseFloat(fee_per_year) : null,
+        feePerYear: fee_per_year ? parseFloat(fee_per_year)  : null,
       },
     });
 
@@ -150,16 +150,13 @@ const updateCourse = async (req, res) => {
     const courseId = parseInt(req.params.id);
 
     await prisma.course.updateMany({
-      where: {
-        id: courseId,
-        collegeId: req.user.id,
-      },
+      where: { id: courseId, collegeId: req.user.id },
       data: {
-        courseName: course_name !== undefined ? course_name : undefined,
-        cutoff: cutoff !== undefined ? parseFloat(cutoff) : undefined,
-        seats: seats !== undefined ? (seats ? parseInt(seats) : null) : undefined,
-        duration: duration !== undefined ? duration : undefined,
-        department: department !== undefined ? department : undefined,
+        courseName: course_name  !== undefined ? course_name  : undefined,
+        cutoff:     cutoff       !== undefined ? parseFloat(cutoff) : undefined,
+        seats:      seats        !== undefined ? (seats ? parseInt(seats) : null)   : undefined,
+        duration:   duration     !== undefined ? duration     : undefined,
+        department: department   !== undefined ? department   : undefined,
         feePerYear: fee_per_year !== undefined ? (fee_per_year ? parseFloat(fee_per_year) : null) : undefined,
       },
     });
@@ -176,10 +173,7 @@ const deleteCourse = async (req, res) => {
     const courseId = parseInt(req.params.id);
 
     await prisma.course.deleteMany({
-      where: {
-        id: courseId,
-        collegeId: req.user.id,
-      },
+      where: { id: courseId, collegeId: req.user.id },
     });
 
     return res.json({ success: true, message: 'Course deleted' });
@@ -201,14 +195,14 @@ const createEvent = async (req, res) => {
 
     const event = await prisma.event.create({
       data: {
-        collegeId: req.user.id,
+        collegeId:            req.user.id,
         name,
-        description: description || null,
-        eventDate: new Date(event_date),
-        location: location || null,
-        posterUrl: poster_url,
+        description:          description || null,
+        eventDate:            new Date(event_date),
+        location:             location || null,
+        posterUrl:            poster_url,
         registrationDeadline: registration_deadline ? new Date(registration_deadline) : null,
-        maxParticipants: max_participants ? parseInt(max_participants) : null,
+        maxParticipants:      max_participants ? parseInt(max_participants) : null,
       },
     });
 
@@ -226,13 +220,13 @@ const addPlacement = async (req, res) => {
 
     const placement = await prisma.placementData.create({
       data: {
-        collegeId: req.user.id,
-        year: parseInt(year),
-        highestPackage: highest_package ? parseFloat(highest_package) : null,
-        averagePackage: average_package ? parseFloat(average_package) : null,
+        collegeId:        req.user.id,
+        year:             parseInt(year),
+        highestPackage:   highest_package   ? parseFloat(highest_package)   : null,
+        averagePackage:   average_package   ? parseFloat(average_package)   : null,
         placementPercent: placement_percent ? parseFloat(placement_percent) : null,
-        topRecruiters: top_recruiters || null,
-        description: description || null,
+        topRecruiters:    top_recruiters    || null,
+        description:      description       || null,
       },
     });
 
@@ -250,13 +244,13 @@ const addScholarship = async (req, res) => {
 
     const scholarship = await prisma.scholarship.create({
       data: {
-        collegeId: req.user.id,
+        collegeId:   req.user.id,
         name,
-        type: type || 'private',
+        type:        type || 'private',
         description: description || null,
-        amount: amount ? parseFloat(amount) : null,
+        amount:      amount   ? parseFloat(amount)  : null,
         eligibility: eligibility || null,
-        deadline: deadline ? new Date(deadline) : null,
+        deadline:    deadline ? new Date(deadline)  : null,
       },
     });
 
@@ -270,16 +264,12 @@ const addScholarship = async (req, res) => {
 const getApplications = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
-    const pageNum = parseInt(page);
+    const pageNum  = parseInt(page);
     const limitNum = parseInt(limit);
-    const offset = (pageNum - 1) * limitNum;
+    const offset   = (pageNum - 1) * limitNum;
 
-    const where = {
-      collegeId: req.user.id,
-    };
-    if (status) {
-      where.status = status;
-    }
+    const where = { collegeId: req.user.id };
+    if (status) where.status = status;
 
     const apps = await prisma.application.findMany({
       where,
@@ -289,8 +279,8 @@ const getApplications = async (req, res) => {
             user: { select: { name: true, email: true, phone: true } },
           },
         },
-        course: { select: { courseName: true } },
-        event: { select: { name: true } },
+        course:     { select: { courseName: true } },
+        event:      { select: { name: true } },
         internship: { select: { title: true } },
       },
       orderBy: { appliedAt: 'desc' },
@@ -299,20 +289,20 @@ const getApplications = async (req, res) => {
     });
 
     const mappedApps = apps.map((app) => ({
-      id: app.id,
-      student_id: app.studentId,
-      student_name: app.student.user.name,
-      student_email: app.student.user.email,
-      student_phone: app.student.user.phone,
-      hsc_marks: app.student.hscMarks,
-      cutoff: app.student.cutoff,
-      course_name: app.course ? app.course.courseName : null,
-      event_name: app.event ? app.event.name : null,
-      internship_title: app.internship ? app.internship.title : null,
-      type: app.type,
-      status: app.status,
-      message: app.message,
-      applied_at: app.appliedAt,
+      id:               app.id,
+      student_id:       app.studentId,
+      student_name:     app.student.user.name,
+      student_email:    app.student.user.email,
+      student_phone:    app.student.user.phone,
+      hsc_marks:        app.student.hscMarks,
+      cutoff:           app.student.cutoff,
+      course_name:      app.course      ? app.course.courseName    : null,
+      event_name:       app.event       ? app.event.name           : null,
+      internship_title: app.internship  ? app.internship.title     : null,
+      type:             app.type,
+      status:           app.status,
+      message:          app.message,
+      applied_at:       app.appliedAt,
     }));
 
     return res.json({ success: true, applications: mappedApps });
@@ -332,11 +322,8 @@ const updateApplicationStatus = async (req, res) => {
     }
 
     const app = await prisma.application.updateMany({
-      where: {
-        id: appId,
-        collegeId: req.user.id,
-      },
-      data: { status },
+      where: { id: appId, collegeId: req.user.id },
+      data:  { status },
     });
 
     if (app.count === 0) {
@@ -349,7 +336,7 @@ const updateApplicationStatus = async (req, res) => {
   }
 };
 
-// POST /api/colleges/posts
+// POST /api/colleges/posts  ← now uses Prisma Post model (no more raw SQL)
 const createPost = async (req, res) => {
   try {
     const { type, title, description, media_type } = req.body;
@@ -358,22 +345,32 @@ const createPost = async (req, res) => {
     let media_url = null;
     if (req.file) media_url = req.file.cloudinaryUrl;
 
-    const [result] = await prisma.query(
-      'INSERT INTO posts (college_id, type, title, description, media_url, media_type) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.user.id, type || 'general', title, description || null, media_url, media_type || 'none']
-    );
+    const post = await prisma.post.create({
+      data: {
+        collegeId:   req.user.id,
+        type:        type       || 'general',
+        title,
+        description: description || null,
+        mediaUrl:    media_url,
+        mediaType:   media_type || 'none',
+      },
+    });
 
-    return res.status(201).json({ success: true, message: 'Post created', post_id: result.insertId });
+    return res.status(201).json({ success: true, message: 'Post created', post_id: post.id });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// DELETE /api/colleges/posts/:id
+// DELETE /api/colleges/posts/:id  ← now uses Prisma Post model
 const deletePost = async (req, res) => {
   try {
     const postId = parseInt(req.params.id);
-    await prisma.query('DELETE FROM posts WHERE id = ? AND college_id = ?', [postId, req.user.id]);
+
+    await prisma.post.deleteMany({
+      where: { id: postId, collegeId: req.user.id },
+    });
+
     return res.json({ success: true, message: 'Post deleted' });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
