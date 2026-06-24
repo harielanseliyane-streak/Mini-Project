@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Navbar         from './components/Navbar';
 import Chatbot        from './components/Chatbot';
 import ProtectedRoute from './components/ProtectedRoute';
+
 import Home             from './pages/Home';
 import Login            from './pages/Login';
 import Register         from './pages/Register';

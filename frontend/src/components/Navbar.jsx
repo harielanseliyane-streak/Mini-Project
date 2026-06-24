@@ -1,15 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info, User, Edit2, Loader2 } from 'lucide-react';
 import Logo from './Logo';
+import { getStudentProfile, updateStudentProfile, getCollegeProfile, updateCollegeProfile } from '../api';
 
 const Navbar = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, updateUser } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  
+
+  // ── Clock widget state ──
+  const [showClock, setShowClock] = useState(false);
+  const [clockTime, setClockTime] = useState(new Date());
+  const clockRef = useRef(null);
+
   const profileRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,7 +23,23 @@ const Navbar = () => {
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+    // Real-time clock tick
+    const tick = setInterval(() => setClockTime(new Date()), 1000);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      clearInterval(tick);
+    };
+  }, []);
+
+  // Close clock on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (clockRef.current && !clockRef.current.contains(e.target)) {
+        setShowClock(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   // Close dropdowns on route change
@@ -39,6 +61,86 @@ const Navbar = () => {
 
 
 
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [modalSuccess, setModalSuccess] = useState('');
+
+  const fetchProfile = async () => {
+    setModalLoading(true);
+    setModalError('');
+    setModalSuccess('');
+    try {
+      if (user.role === 'student') {
+        const { data } = await getStudentProfile();
+        setProfileData(data.student);
+        setEditForm(data.student);
+      } else if (user.role === 'college') {
+        const { data } = await getCollegeProfile();
+        setProfileData(data.college);
+        setEditForm(data.college);
+      } else {
+        setProfileData({ name: user.name, email: user.email, phone: user.phone });
+        setEditForm({ name: user.name, email: user.email, phone: user.phone });
+      }
+    } catch (err) {
+      setModalError(err.response?.data?.message || 'Failed to load profile details.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showProfileModal && isAuthenticated && user) {
+      fetchProfile();
+      setIsEditing(false);
+    }
+  }, [showProfileModal]);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setModalLoading(true);
+    setModalError('');
+    setModalSuccess('');
+    try {
+      if (user.role === 'student') {
+        await updateStudentProfile({
+          name: editForm.name,
+          phone: editForm.phone,
+          hsc_marks: editForm.hsc_marks,
+          cutoff: editForm.cutoff,
+          bio: editForm.bio
+        });
+        updateUser({ name: editForm.name, phone: editForm.phone });
+      } else if (user.role === 'college') {
+        await updateCollegeProfile({
+          phone: editForm.phone,
+          college_name: editForm.college_name,
+          address: editForm.address,
+          city: editForm.city,
+          state: editForm.state,
+          website: editForm.website,
+          description: editForm.description,
+          established: editForm.established,
+          accreditation: editForm.accreditation
+        });
+        updateUser({ name: editForm.college_name, phone: editForm.phone });
+      }
+      setModalSuccess('Profile updated successfully!');
+      setTimeout(() => {
+        setIsEditing(false);
+        fetchProfile();
+      }, 800);
+    } catch (err) {
+      setModalError(err.response?.data?.message || 'Failed to update profile.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -55,11 +157,13 @@ const Navbar = () => {
     { to: '/', label: 'Home' },
     { to: '/colleges', label: 'Colleges' },
     ...(user?.role === 'student' ? [{ to: '/quiz', label: '🎯 Career Quiz' }] : []),
-    ...(isAuthenticated ? [] : [
-      { to: '/login', label: 'Login' },
-      { to: '/register', label: 'Register' },
-    ]),
+    ...(isAuthenticated ? [] : [{ to: '/register', label: 'Register' }]),
   ];
+
+  // Clock hand angles
+  const secDeg  = clockTime.getSeconds() * 6;
+  const minDeg  = clockTime.getMinutes() * 6  + clockTime.getSeconds() * 0.1;
+  const hourDeg = (clockTime.getHours() % 12) * 30 + clockTime.getMinutes() * 0.5;
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -69,10 +173,85 @@ const Navbar = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <Logo />
-          </Link>
+
+          {/* ── TOP-LEFT: Clock button + Logo ── */}
+          <div className="flex items-center gap-8">
+
+            {/* Clock toggle button */}
+            <div className="relative" ref={clockRef}>
+              <button
+                onClick={() => setShowClock(v => !v)}
+                className="navbar-clock-btn"
+                title={showClock ? 'Hide Clock' : 'Show Clock'}
+                aria-label="Toggle analog clock"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </button>
+
+              {/* Swing-in clock dropdown */}
+              {showClock && (
+                <div className="navbar-clock-popup" key={String(showClock)}>
+                  <svg viewBox="0 0 100 100" fill="none" className="navbar-clock-svg">
+                    {/* Glass face */}
+                    <circle cx="50" cy="50" r="46"
+                      fill="rgba(255,255,255,0.60)"
+                      stroke="#006672" strokeWidth="1.4" strokeOpacity="0.3" />
+
+                    {/* 12 dot ticks (no numbers) */}
+                    {Array.from({ length: 12 }).map((_, i) => {
+                      const a = (i * 30 - 90) * (Math.PI / 180);
+                      const isMaj = i % 3 === 0;
+                      return (
+                        <circle key={i}
+                          cx={50 + 38 * Math.cos(a)}
+                          cy={50 + 38 * Math.sin(a)}
+                          r={isMaj ? 2.2 : 1.1}
+                          fill="#006672"
+                          fillOpacity={isMaj ? 0.7 : 0.35}
+                        />
+                      );
+                    })}
+
+                    {/* Hour hand */}
+                    <line x1="50" y1="50" x2="50" y2="27"
+                      stroke="#006672" strokeWidth="4.5" strokeLinecap="round"
+                      style={{ transform: `rotate(${hourDeg}deg)`, transformOrigin: '50px 50px',
+                        transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
+                    />
+                    {/* Minute hand */}
+                    <line x1="50" y1="52" x2="50" y2="14"
+                      stroke="#028090" strokeWidth="2.8" strokeLinecap="round"
+                      style={{ transform: `rotate(${minDeg}deg)`, transformOrigin: '50px 50px',
+                        transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
+                    />
+                    {/* Second hand */}
+                    <line x1="50" y1="58" x2="50" y2="11"
+                      stroke="#e05a00" strokeWidth="1.3" strokeLinecap="round"
+                      style={{ transform: `rotate(${secDeg}deg)`, transformOrigin: '50px 50px',
+                        transition: 'transform 0.18s linear' }}
+                    />
+                    {/* Center cap */}
+                    <circle cx="50" cy="50" r="3.5" fill="#006672" />
+                    <circle cx="50" cy="50" r="1.4" fill="white" />
+                  </svg>
+
+                  {/* Digital time label */}
+                  <div className="navbar-clock-label">
+                    {clockTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 group">
+              <Logo />
+            </Link>
+          </div>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-2">
@@ -120,6 +299,12 @@ const Navbar = () => {
                       <LayoutDashboard className="w-4 h-4" /> Dashboard
                     </Link>
                     <button
+                      onClick={() => { setShowProfileModal(true); setProfileOpen(false); }}
+                      className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
+                    >
+                      <User className="w-4 h-4" /> My Profile
+                    </button>
+                    <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-danger hover:bg-danger/10 transition-all"
                     >
@@ -159,6 +344,17 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+              {!isAuthenticated && (
+                <>
+                  <div className="border-t border-slate-100 my-1.5" />
+                  <Link
+                    to="/login"
+                    className="block px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
+                  >
+                    🔐 Login
+                  </Link>
+                </>
+              )}
               {isAuthenticated && (
                 <>
                   <Link
@@ -167,6 +363,12 @@ const Navbar = () => {
                   >
                     📊 Dashboard
                   </Link>
+                  <button
+                    onClick={() => { setShowProfileModal(true); setMenuOpen(false); }}
+                    className="w-full text-left block px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
+                  >
+                    👤 My Profile
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold text-danger hover:bg-danger/10 transition-all"
@@ -179,6 +381,331 @@ const Navbar = () => {
           </div>
         )}
       </div>
+      {/* ── Profile Modal ── */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative scrollbar-premium animate-slide-up text-left">
+            {/* Close Button */}
+            <button 
+              onClick={() => setShowProfileModal(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-xl hover:bg-slate-50"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-3.5 mb-6 pb-4 border-b border-slate-100">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl shadow-lg shadow-primary/20">
+                👤
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-slate-800 text-lg md:text-xl">Personal Profile</h3>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{user?.role} details</p>
+              </div>
+            </div>
+
+            {/* Error & Success Messages */}
+            {modalError && (
+              <div className="mb-4 p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs font-semibold text-center">
+                {modalError}
+              </div>
+            )}
+            {modalSuccess && (
+              <div className="mb-4 p-3 rounded-xl bg-success/10 border border-success/20 text-success text-xs font-semibold text-center">
+                {modalSuccess}
+              </div>
+            )}
+
+            {modalLoading && !profileData ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-xs text-slate-400 font-semibold">Loading profile details...</p>
+              </div>
+            ) : profileData ? (
+              <form onSubmit={handleSaveProfile} className="space-y-5">
+                {isEditing ? (
+                  // ── EDITING MODE ──
+                  <div className="space-y-4">
+                    {user.role === 'student' ? (
+                      <>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="label">Full Name</label>
+                            <input 
+                              type="text" 
+                              required 
+                              value={editForm.name || ''} 
+                              onChange={e => setEditForm({ ...editForm, name: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Phone Number</label>
+                            <input 
+                              type="tel" 
+                              value={editForm.phone || ''} 
+                              onChange={e => setEditForm({ ...editForm, phone: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="label">HSC Marks (%)</label>
+                            <input 
+                              type="number" 
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              value={editForm.hsc_marks || ''} 
+                              onChange={e => setEditForm({ ...editForm, hsc_marks: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Cutoff Score (out of 200)</label>
+                            <input 
+                              type="number" 
+                              step="0.01"
+                              min="0"
+                              max="200"
+                              value={editForm.cutoff || ''} 
+                              onChange={e => setEditForm({ ...editForm, cutoff: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="label">Short Bio</label>
+                          <textarea 
+                            rows="3"
+                            value={editForm.bio || ''} 
+                            onChange={e => setEditForm({ ...editForm, bio: e.target.value })} 
+                            className="input min-h-[80px]"
+                            placeholder="Write a brief intro..."
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="label">College Name</label>
+                            <input 
+                              type="text" 
+                              required 
+                              value={editForm.college_name || ''} 
+                              onChange={e => setEditForm({ ...editForm, college_name: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Phone</label>
+                            <input 
+                              type="tel" 
+                              value={editForm.phone || ''} 
+                              onChange={e => setEditForm({ ...editForm, phone: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="label">Website URL</label>
+                            <input 
+                              type="url" 
+                              value={editForm.website || ''} 
+                              onChange={e => setEditForm({ ...editForm, website: e.target.value })} 
+                              className="input"
+                              placeholder="https://..."
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Established Year</label>
+                            <input 
+                              type="number" 
+                              value={editForm.established || ''} 
+                              onChange={e => setEditForm({ ...editForm, established: e.target.value })} 
+                              className="input"
+                              placeholder="e.g. 1980"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Accreditation</label>
+                            <input 
+                              type="text" 
+                              value={editForm.accreditation || ''} 
+                              onChange={e => setEditForm({ ...editForm, accreditation: e.target.value })} 
+                              className="input"
+                              placeholder="e.g. NAAC A++"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="label">City</label>
+                            <input 
+                              type="text" 
+                              value={editForm.city || ''} 
+                              onChange={e => setEditForm({ ...editForm, city: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">State</label>
+                            <input 
+                              type="text" 
+                              value={editForm.state || ''} 
+                              onChange={e => setEditForm({ ...editForm, state: e.target.value })} 
+                              className="input"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="label">Full Address</label>
+                          <textarea 
+                            rows="2"
+                            value={editForm.address || ''} 
+                            onChange={e => setEditForm({ ...editForm, address: e.target.value })} 
+                            className="input min-h-[60px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="label">Description</label>
+                          <textarea 
+                            rows="3"
+                            value={editForm.description || ''} 
+                            onChange={e => setEditForm({ ...editForm, description: e.target.value })} 
+                            className="input min-h-[80px]"
+                            placeholder="Introduce your institution..."
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
+                      <button 
+                        type="button" 
+                        onClick={() => setIsEditing(false)}
+                        className="btn-ghost px-5 py-2.5 text-sm"
+                        disabled={modalLoading}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="btn-primary px-6 py-2.5 text-sm flex items-center gap-2"
+                        disabled={modalLoading}
+                      >
+                        {modalLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // ── DISPLAY/VIEW MODE ──
+                  <div className="space-y-6">
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 md:p-6 space-y-4">
+                      {user.role === 'student' ? (
+                        <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Name</span>
+                            <span className="font-semibold text-slate-800 text-base">{profileData.name}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Email Address</span>
+                            <span className="font-semibold text-slate-800 text-base">{profileData.email}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Phone Number</span>
+                            <span className="font-semibold text-slate-800 text-base">{profileData.phone || 'Not provided'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">HSC Marks / Cutoff Score</span>
+                            <span className="font-semibold text-slate-800 text-base">
+                              {profileData.hsc_marks ? `${profileData.hsc_marks}%` : 'N/A'} 
+                              {profileData.cutoff ? ` / ${profileData.cutoff} (out of 200)` : ''}
+                            </span>
+                          </div>
+                          <div className="md:col-span-2">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Bio</span>
+                            <p className="text-slate-600 mt-1 leading-relaxed text-xs italic">{profileData.bio || 'No bio written yet.'}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">College Name</span>
+                            <span className="font-semibold text-slate-800 text-base">{profileData.college_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Contact Email</span>
+                            <span className="font-semibold text-slate-800 text-base">{profileData.email}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Phone</span>
+                            <span className="font-semibold text-slate-800 text-base">{profileData.phone || 'Not provided'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Website</span>
+                            {profileData.website ? (
+                              <a href={profileData.website} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline text-base block truncate">
+                                {profileData.website}
+                              </a>
+                            ) : (
+                              <span className="font-semibold text-slate-800 text-base">Not provided</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Established / Accreditation</span>
+                            <span className="font-semibold text-slate-800 text-base">
+                              {profileData.established || 'N/A'} {profileData.accreditation ? ` (${profileData.accreditation})` : ''}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">City & State</span>
+                            <span className="font-semibold text-slate-800 text-base">
+                              {profileData.city || 'N/A'}{profileData.state ? `, ${profileData.state}` : ''}
+                            </span>
+                          </div>
+                          <div className="md:col-span-2">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Address</span>
+                            <span className="text-slate-700 block text-xs mt-0.5">{profileData.address || 'Not provided'}</span>
+                          </div>
+                          <div className="md:col-span-2">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Institution Description</span>
+                            <p className="text-slate-600 mt-1 leading-relaxed text-xs">{profileData.description || 'No description provided.'}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowProfileModal(false)}
+                        className="btn-ghost px-5 py-2.5 text-sm"
+                      >
+                        Close
+                      </button>
+                      {user.role !== 'admin' && (
+                        <button 
+                          type="button" 
+                          onClick={() => { setEditForm({ ...profileData }); setIsEditing(true); }}
+                          className="btn-primary px-6 py-2.5 text-sm flex items-center gap-2"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Edit Profile
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </form>
+            ) : null}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

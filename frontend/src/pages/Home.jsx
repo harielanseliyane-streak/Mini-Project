@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getPublicColleges, saveItem, getSavedItems, removeSavedItem } from '../api';
 import CollegeCard from '../components/CollegeCard';
 import { useAuth } from '../context/AuthContext';
-import { Bell, BellOff, X, Megaphone, Check } from 'lucide-react';
+import { Bell, BellOff, X, Megaphone, Check, CalendarClock } from 'lucide-react';
+import BirdCanvas from '../components/BirdCanvas';
 
 const StatCard = ({ value, label, icon }) => (
   <div className="glass rounded-2xl p-6 text-center">
@@ -49,8 +50,15 @@ const Home = () => {
 
   // Bulletins state
   const [showBulletin, setShowBulletin] = useState(false);
+  // reminders: { [id]: { date: ISO string } } or {} if not set
   const [reminders, setReminders] = useState({});
   const [toastMsg, setToastMsg] = useState('');
+  // Reminder date-picker modal
+  const [reminderModal, setReminderModal] = useState(null); // { id, title } | null
+  const [pickedDate, setPickedDate] = useState('');
+
+  // Real-time analog clock state
+  const [clockTime, setClockTime] = useState(new Date());
 
   useEffect(() => {
     getPublicColleges()
@@ -85,25 +93,56 @@ const Home = () => {
       setShowBulletin(true);
     }, 1500);
 
-    return () => clearTimeout(timer);
+    // Real-time clock tick — every second
+    const clockTick = setInterval(() => setClockTime(new Date()), 1000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(clockTick);
+    };
   }, [isAuthenticated, user]);
+
+  // Clock hand angle calculations
+  const clockSec  = clockTime.getSeconds();
+  const clockMin  = clockTime.getMinutes();
+  const clockHr   = clockTime.getHours() % 12;
+  const secDeg    = clockSec  * 6;                          // 360/60
+  const minDeg    = clockMin  * 6  + clockSec  * 0.1;       // smooth
+  const hourDeg   = clockHr   * 30 + clockMin  * 0.5;       // smooth
 
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 4000);
   };
 
+  // Open date-picker modal to choose reminder date
   const handleToggleReminder = (id, title) => {
+    if (reminders[id]) {
+      // Already set — cancel it
+      setReminders(prev => {
+        const updated = { ...prev };
+        delete updated[id];
+        localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
+        return updated;
+      });
+      showToast(`🔕 Reminder cancelled for: ${title}`);
+    } else {
+      // Open date picker
+      setPickedDate('');
+      setReminderModal({ id, title });
+    }
+  };
+
+  const handleConfirmReminder = () => {
+    if (!pickedDate) { showToast('⚠️ Please pick a date & time first.'); return; }
+    const { id, title } = reminderModal;
     setReminders(prev => {
-      const updated = { ...prev, [id]: !prev[id] };
+      const updated = { ...prev, [id]: { date: pickedDate } };
       localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
-      if (updated[id]) {
-        showToast(`🔔 Reminder set for: ${title}!`);
-      } else {
-        showToast(`🔕 Reminder cancelled for: ${title}`);
-      }
       return updated;
     });
+    showToast(`🔔 Reminder set for: ${new Date(pickedDate).toLocaleString('en-IN')}`);
+    setReminderModal(null);
   };
 
   const handleToggleFavorite = async (collegeId) => {
@@ -160,6 +199,24 @@ const Home = () => {
           backgroundRepeat: 'no-repeat'
         }}
       >
+        {/* ── Flying Birds Layer ── */}
+        <BirdCanvas />
+
+        {/* ── Floating Dust / Light Particles ── */}
+        <div aria-hidden="true" className="hero-particles">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span key={i} className="hero-particle" style={{
+              left: `${5 + (i * 5.3) % 95}%`,
+              animationDelay: `${(i * 0.43) % 6}s`,
+              animationDuration: `${7 + (i * 1.1) % 8}s`,
+              width:  `${3 + (i * 0.7) % 5}px`,
+              height: `${3 + (i * 0.7) % 5}px`,
+              opacity: 0.12 + (i % 5) * 0.06,
+            }} />
+          ))}
+        </div>
+
+
         <div className="relative z-10 text-left px-6 sm:px-12 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
           <div className="max-w-2xl">
             {/* Badge */}
@@ -357,11 +414,12 @@ const Home = () => {
                 >
                   {reminders[bulletin.id] ? (
                     <>
-                      <Check className="w-3.5 h-3.5" /> Reminder Set
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Reminder: {new Date(reminders[bulletin.id].date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
                     </>
                   ) : (
                     <>
-                      <Bell className="w-3.5 h-3.5" /> Set Reminder
+                      <CalendarClock className="w-3.5 h-3.5" /> Set Reminder Date
                     </>
                   )}
                 </button>
@@ -371,18 +429,64 @@ const Home = () => {
         </div>
       )}
 
-      {/* Bulletins Trigger (if closed) */}
+
+      {/* ── Bulletins Trigger button (re-opens after closing) ── */}
       {!showBulletin && (
         <button
           onClick={() => setShowBulletin(true)}
-          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-premium hover:shadow-primary-glow transition-all duration-300"
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
         >
           <Megaphone className="w-5 h-5 animate-bounce" />
           <span className="text-sm">Live Bulletins ({bulletinsList.length})</span>
         </button>
       )}
 
+      {/* ── Reminder Date-Picker Modal ── */}
+      {reminderModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm p-6 animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="w-5 h-5 text-primary" />
+                <h3 className="font-heading font-bold text-slate-800 text-base">Set Reminder</h3>
+              </div>
+              <button onClick={() => setReminderModal(null)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-50">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-1 font-semibold">Event</p>
+            <p className="text-sm font-bold text-slate-800 mb-4 leading-snug">{reminderModal.title}</p>
+
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Choose your reminder date &amp; time</label>
+            <input
+              type="datetime-local"
+              value={pickedDate}
+              min={new Date().toISOString().slice(0, 16)}
+              onChange={e => setPickedDate(e.target.value)}
+              className="input mb-4 text-sm"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setReminderModal(null)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReminder}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
+              >
+                <Bell className="w-3.5 h-3.5 inline mr-1" /> Confirm Reminder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast alert popup */}
+
       {toastMsg && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white font-medium px-5 py-3 rounded-xl shadow-premium border border-slate-800 text-sm flex items-center gap-2 animate-fade-in">
           <span>🔔</span> {toastMsg}
