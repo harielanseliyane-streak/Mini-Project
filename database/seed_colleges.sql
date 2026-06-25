@@ -2,6 +2,9 @@
 -- Auto-generated Seed Data for Colleges, Courses, Placements, and Events (FULL DATASET)
 -- ============================================================
 
+-- Clean up any previous seed data to avoid email or ID conflicts
+DELETE FROM users WHERE id >= 100;
+
 -- 1. USERS
 INSERT INTO users (id, role, name, email, password_hash, phone) VALUES
 (100, 'college', 'IIT Madras (Indian Institute of Technology)', 'deanadmn@iitm.ac.in', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImSgoeVW', '04420000001'),
