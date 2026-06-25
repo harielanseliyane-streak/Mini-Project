@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info, User, Edit2, Loader2 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info, User, Edit2, Loader2, Bell } from 'lucide-react';
 import Logo from './Logo';
 import { getStudentProfile, updateStudentProfile, getCollegeProfile, updateCollegeProfile } from '../api';
 import InstallButton from './InstallButton';
@@ -12,10 +12,26 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // ── Clock widget state ──
-  const [showClock, setShowClock] = useState(false);
-  const [clockTime, setClockTime] = useState(new Date());
-  const clockRef = useRef(null);
+  // ── Notifications widget state ──
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [reminders, setReminders] = useState({});
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    const loadReminders = () => {
+      const saved = localStorage.getItem('bulletin_reminders');
+      if (saved) {
+        setReminders(JSON.parse(saved));
+        setHasNewNotifications(true);
+      } else {
+        setReminders({});
+      }
+    };
+    loadReminders();
+    window.addEventListener('reminders_updated', loadReminders);
+    return () => window.removeEventListener('reminders_updated', loadReminders);
+  }, []);
 
   const profileRef = useRef(null);
   const location = useLocation();
@@ -24,19 +40,16 @@ const Navbar = () => {
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
-    // Real-time clock tick
-    const tick = setInterval(() => setClockTime(new Date()), 1000);
     return () => {
       window.removeEventListener('scroll', onScroll);
-      clearInterval(tick);
     };
   }, []);
 
-  // Close clock on outside click
+  // Close notifs on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (clockRef.current && !clockRef.current.contains(e.target)) {
-        setShowClock(false);
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifs(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -161,11 +174,6 @@ const Navbar = () => {
     ...(isAuthenticated ? [] : [{ to: '/register', label: 'Register' }]),
   ];
 
-  // Clock hand angles
-  const secDeg  = clockTime.getSeconds() * 6;
-  const minDeg  = clockTime.getMinutes() * 6  + clockTime.getSeconds() * 0.1;
-  const hourDeg = (clockTime.getHours() % 12) * 30 + clockTime.getMinutes() * 0.5;
-
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled 
@@ -175,74 +183,85 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* ── TOP-LEFT: Clock button + Logo ── */}
+          {/* ── TOP-LEFT: Notifications button + Logo ── */}
           <div className="flex items-center gap-8">
 
-            {/* Clock toggle button */}
-            <div className="relative" ref={clockRef}>
+            {/* Notifications toggle button */}
+            <div className="relative" ref={notifRef}>
               <button
-                onClick={() => setShowClock(v => !v)}
-                className="navbar-clock-btn"
-                title={showClock ? 'Hide Clock' : 'Show Clock'}
-                aria-label="Toggle analog clock"
+                onClick={() => {
+                  setShowNotifs(v => !v);
+                  if (!showNotifs) setHasNewNotifications(false);
+                }}
+                className={`navbar-clock-btn flex items-center justify-center relative ${hasNewNotifications ? 'animate-shake' : ''}`}
+                title={showNotifs ? 'Hide Notifications' : 'Show Notifications'}
+                aria-label="Toggle notifications"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                  strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
+                <Bell className="w-[18px] h-[18px] text-slate-600 group-hover:text-primary transition-colors" />
+                {hasNewNotifications && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                )}
               </button>
 
-              {/* Swing-in clock dropdown */}
-              {showClock && (
-                <div className="navbar-clock-popup" key={String(showClock)}>
-                  <svg viewBox="0 0 100 100" fill="none" className="navbar-clock-svg">
-                    {/* Glass face */}
-                    <circle cx="50" cy="50" r="46"
-                      fill="rgba(255,255,255,0.60)"
-                      stroke="#006672" strokeWidth="1.4" strokeOpacity="0.3" />
-
-                    {/* 12 dot ticks (no numbers) */}
-                    {Array.from({ length: 12 }).map((_, i) => {
-                      const a = (i * 30 - 90) * (Math.PI / 180);
-                      const isMaj = i % 3 === 0;
-                      return (
-                        <circle key={i}
-                          cx={50 + 38 * Math.cos(a)}
-                          cy={50 + 38 * Math.sin(a)}
-                          r={isMaj ? 2.2 : 1.1}
-                          fill="#006672"
-                          fillOpacity={isMaj ? 0.7 : 0.35}
-                        />
-                      );
-                    })}
-
-                    {/* Hour hand */}
-                    <line x1="50" y1="50" x2="50" y2="27"
-                      stroke="#006672" strokeWidth="4.5" strokeLinecap="round"
-                      style={{ transform: `rotate(${hourDeg}deg)`, transformOrigin: '50px 50px',
-                        transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
-                    />
-                    {/* Minute hand */}
-                    <line x1="50" y1="52" x2="50" y2="14"
-                      stroke="#028090" strokeWidth="2.8" strokeLinecap="round"
-                      style={{ transform: `rotate(${minDeg}deg)`, transformOrigin: '50px 50px',
-                        transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
-                    />
-                    {/* Second hand */}
-                    <line x1="50" y1="58" x2="50" y2="11"
-                      stroke="#e05a00" strokeWidth="1.3" strokeLinecap="round"
-                      style={{ transform: `rotate(${secDeg}deg)`, transformOrigin: '50px 50px',
-                        transition: 'transform 0.18s linear' }}
-                    />
-                    {/* Center cap */}
-                    <circle cx="50" cy="50" r="3.5" fill="#006672" />
-                    <circle cx="50" cy="50" r="1.4" fill="white" />
-                  </svg>
-
-                  {/* Digital time label */}
-                  <div className="navbar-clock-label">
-                    {clockTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+              {/* Swing-in notifications dropdown */}
+              {showNotifs && (
+                <div className="absolute top-[calc(100%+10px)] left-0 w-80 max-w-[calc(100vw-2rem)] bg-white shadow-xl rounded-2xl border border-slate-100 text-left animate-slide-up z-50 overflow-hidden flex flex-col" key={String(showNotifs)}>
+                  <div className="bg-primary/5 px-4 py-3 border-b border-primary/10 flex items-center justify-between">
+                    <h3 className="font-heading font-bold text-slate-800 text-sm m-0">Notifications</h3>
+                    <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{4 + Object.keys(reminders).length} New</span>
+                  </div>
+                  <div className="max-h-[350px] overflow-y-auto scrollbar-premium flex flex-col">
+                    {/* Dynamic Reminders */}
+                    {Object.entries(reminders).map(([id, rem]) => (
+                      <div key={id} className="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-red-600 text-sm">⏰</span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-800 font-semibold leading-snug">Reminder: {rem.title || 'Event'}</p>
+                          <p className="text-[10px] text-slate-400 mt-1">{new Date(rem.date).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-green-600 text-sm">✓</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-800 font-semibold leading-snug">You've successfully applied for the hackathon!</p>
+                        <p className="text-[10px] text-slate-400 mt-1">2 mins ago</p>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-blue-600 text-sm">🏢</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-800 font-semibold leading-snug">New Placement Drive announced for next week.</p>
+                        <p className="text-[10px] text-slate-400 mt-1">1 hour ago</p>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-purple-600 text-sm">🏆</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-800 font-semibold leading-snug">Coding Contest starts tomorrow. Are you ready?</p>
+                        <p className="text-[10px] text-slate-400 mt-1">5 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-orange-600 text-sm">📋</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-800 font-semibold leading-snug">Some requirements available for all students.</p>
+                        <p className="text-[10px] text-slate-400 mt-1">1 day ago</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
+                    <button className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">Mark all as read</button>
                   </div>
                 </div>
               )}

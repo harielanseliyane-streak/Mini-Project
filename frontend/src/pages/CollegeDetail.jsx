@@ -90,25 +90,27 @@ const CollegeDetail = () => {
         {/* Courses */}
         {tab === 'courses' && (
           <div className="glass rounded-2xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="border-b border-white/10 bg-white/5">
-                <tr>{['Course','Dept','Cutoff','Seats','Duration','Fee/Year',''].map(h => <th key={h} className="text-left px-4 py-3 text-slate-400 font-medium">{h}</th>)}</tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {college.courses?.map(c => (
-                  <tr key={c.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-slate-800 font-medium">{c.course_name}</td>
-                    <td className="px-4 py-3 text-slate-500">{c.department || '—'}</td>
-                    <td className="px-4 py-3 text-primary font-bold">{c.cutoff}</td>
-                    <td className="px-4 py-3 text-slate-600">{c.seats || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600">{c.duration || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600">{c.fee_per_year ? `₹${Number(c.fee_per_year).toLocaleString()}` : '—'}</td>
-                    <td className="px-4 py-3">{user?.role === 'student' && <button onClick={() => handleApply(c.id)} className="btn-primary text-xs px-3 py-1.5">Apply</button>}</td>
-                  </tr>
-                ))}
-                {!college.courses?.length && <tr><td colSpan={7} className="px-4 py-8 text-slate-500 text-center">No courses listed</td></tr>}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-white/10 bg-white/5">
+                  <tr>{['Course','Dept','Cutoff','Seats','Duration','Fee/Year',''].map(h => <th key={h} className="text-left px-4 py-3 text-slate-400 font-medium">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {college.courses?.map(c => (
+                    <tr key={c.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-slate-800 font-medium">{c.course_name}</td>
+                      <td className="px-4 py-3 text-slate-500">{c.department || '—'}</td>
+                      <td className="px-4 py-3 text-primary font-bold">{c.cutoff}</td>
+                      <td className="px-4 py-3 text-slate-600">{c.seats || '—'}</td>
+                      <td className="px-4 py-3 text-slate-600">{c.duration || '—'}</td>
+                      <td className="px-4 py-3 text-slate-600">{c.fee_per_year ? `₹${Number(c.fee_per_year).toLocaleString()}` : '—'}</td>
+                      <td className="px-4 py-3">{user?.role === 'student' && <button onClick={() => handleApply(c.id)} className="btn-primary text-xs px-3 py-1.5">Apply</button>}</td>
+                    </tr>
+                  ))}
+                  {!college.courses?.length && <tr><td colSpan={7} className="px-4 py-8 text-slate-500 text-center">No courses listed</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -118,7 +120,7 @@ const CollegeDetail = () => {
             {college.placements?.map(pl => (
               <div key={pl.id} className="glass rounded-xl p-5">
                 <div className="flex justify-between mb-3"><span className="font-heading font-bold text-slate-800 text-xl">{pl.year}</span><span className="text-emerald-500 font-bold">{pl.placement_percent}% placed</span></div>
-                <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Highest</p><p className="text-primary font-bold">{pl.highest_package} LPA</p></div>
                   <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Average</p><p className="text-secondary font-bold">{pl.average_package} LPA</p></div>
                 </div>

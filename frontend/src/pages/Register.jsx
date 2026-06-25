@@ -87,7 +87,7 @@ const Register = () => {
                 <Field label="College Name" value={form.college_name} onChange={set('college_name')} placeholder="ABC Engineering College" required />
                 <Field label="Email"        value={form.email}        onChange={set('email')}        type="email" placeholder="admin@college.edu" required />
                 <Field label="Phone"        value={form.phone}        onChange={set('phone')}        type="tel" placeholder="+91 9876543210" />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="City"  value={form.city}  onChange={set('city')}  placeholder="Chennai" />
                   <Field label="State" value={form.state} onChange={set('state')} placeholder="Tamil Nadu" />
                 </div>

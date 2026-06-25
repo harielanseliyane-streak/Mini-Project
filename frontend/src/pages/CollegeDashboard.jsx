@@ -189,24 +189,26 @@ const CollegeDashboard = () => {
               </form>
             </div>
             <div className="glass rounded-2xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50">
-                  <tr>{['Course','Dept','Cutoff','Seats','Fee/Year',''].map(h => <th key={h} className="text-left text-slate-500 font-medium px-4 py-3">{h}</th>)}</tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {profile?.courses?.map(c => (
-                    <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-slate-800 font-medium">{c.course_name}</td>
-                      <td className="px-4 py-3 text-slate-500">{c.department || '—'}</td>
-                      <td className="px-4 py-3 text-primary font-bold">{c.cutoff}</td>
-                      <td className="px-4 py-3 text-slate-600">{c.seats || '—'}</td>
-                      <td className="px-4 py-3 text-slate-600">{c.fee_per_year ? `₹${Number(c.fee_per_year).toLocaleString()}` : '—'}</td>
-                      <td className="px-4 py-3"><button onClick={() => handleDeleteCourse(c.id)} className="text-red-400 hover:text-red-300 transition-colors">🗑️</button></td>
-                    </tr>
-                  ))}
-                  {!profile?.courses?.length && <tr><td colSpan={6} className="px-4 py-8 text-slate-500 text-center">No courses added yet</td></tr>}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-slate-200 bg-slate-50">
+                    <tr>{['Course','Dept','Cutoff','Seats','Fee/Year',''].map(h => <th key={h} className="text-left text-slate-500 font-medium px-4 py-3">{h}</th>)}</tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {profile?.courses?.map(c => (
+                      <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3 text-slate-800 font-medium">{c.course_name}</td>
+                        <td className="px-4 py-3 text-slate-500">{c.department || '—'}</td>
+                        <td className="px-4 py-3 text-primary font-bold">{c.cutoff}</td>
+                        <td className="px-4 py-3 text-slate-600">{c.seats || '—'}</td>
+                        <td className="px-4 py-3 text-slate-600">{c.fee_per_year ? `₹${Number(c.fee_per_year).toLocaleString()}` : '—'}</td>
+                        <td className="px-4 py-3"><button onClick={() => handleDeleteCourse(c.id)} className="text-red-400 hover:text-red-300 transition-colors">🗑️</button></td>
+                      </tr>
+                    ))}
+                    {!profile?.courses?.length && <tr><td colSpan={6} className="px-4 py-8 text-slate-500 text-center">No courses added yet</td></tr>}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -301,7 +303,7 @@ const CollegeDashboard = () => {
                     <span className="font-heading font-bold text-slate-800 text-lg">{pl.year}</span>
                     <span className="text-emerald-500 font-semibold">{pl.placement_percent}% placed</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Highest</p><p className="text-primary font-bold">{pl.highest_package} LPA</p></div>
                     <div className="glass rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Average</p><p className="text-secondary font-bold">{pl.average_package} LPA</p></div>
                   </div>

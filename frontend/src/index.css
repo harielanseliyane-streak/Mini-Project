@@ -315,6 +315,19 @@
   100% { transform: rotate(0deg); }
 }
 
+/* ── Shake Animation ── */
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-15deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-10deg); }
+  80% { transform: rotate(5deg); }
+}
+.animate-shake {
+  animation: shake 0.5s ease-in-out infinite;
+  transform-origin: top center;
+}
+
 /* ── Shimmer ── */
 @keyframes shimmer {
   0%   { background-position: -200% 0; }

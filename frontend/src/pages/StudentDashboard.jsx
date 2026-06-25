@@ -282,7 +282,7 @@ const StudentDashboard = () => {
                   </>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="glass rounded-xl p-4 text-center">
                         <p className="text-slate-500 text-xs mb-1">HSC Marks</p>
                         <p className="text-2xl font-bold gradient-text">{profile?.hsc_marks || '—'}<span className="text-sm text-slate-400">%</span></p>
