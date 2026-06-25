@@ -32,8 +32,6 @@ const Colleges = () => {
   };
 
   useEffect(() => { 
-    fetchColleges(1);
-    
     // Load student favorites on mount
     if (isAuthenticated && user?.role === 'student') {
       getSavedItems()
@@ -50,6 +48,15 @@ const Colleges = () => {
         .catch(() => {});
     }
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setPage(1);
+      fetchColleges(1);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, city, cutoff]);
 
   const handleSearch = (e) => { e.preventDefault(); setPage(1); fetchColleges(1); };
   
