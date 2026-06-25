@@ -217,7 +217,9 @@ function generateSQL() {
     });
     sql += eventValues.join(",\n") + ";\n\n";
 
-    fs.writeFileSync('seed_colleges.sql', sql);
+    const path = require('path');
+    const outPath = path.join(__dirname, 'seed_colleges.sql');
+    fs.writeFileSync(outPath, sql);
     console.log("Successfully generated seed_colleges.sql with " + colleges.length + " colleges.");
 }
 

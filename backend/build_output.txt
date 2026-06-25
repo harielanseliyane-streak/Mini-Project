@@ -11,12 +11,12 @@ computing gzip size...
 [2mdist/[22m[32mindex.html                                  [39m[1m[2m  1.22 kB[22m[1m[22m[2m │ gzip:   0.63 kB[22m
 [2mdist/[22m[35massets/index-CDJw-RpF.css                   [39m[1m[2m 51.24 kB[22m[1m[22m[2m │ gzip:   9.00 kB[22m
 [2mdist/[22m[36massets/workbox-window.prod.es5-BqEJf4Xk.js  [39m[1m[2m  5.71 kB[22m[1m[22m[2m │ gzip:   2.34 kB[22m
-[2mdist/[22m[36massets/index-pBJqfCoz.js                    [39m[1m[33m501.06 kB[39m[22m[2m │ gzip: 148.94 kB[22m
-[32m✓ built in 7.16s[39m
+[2mdist/[22m[36massets/index-DbFSOouI.js                    [39m[1m[33m501.15 kB[39m[22m[2m │ gzip: 148.96 kB[22m
+[32m✓ built in 9.27s[39m
 
 PWA v1.3.0
 mode      generateSW
-precache  8 entries (2002.87 KiB)
+precache  8 entries (2002.95 KiB)
 files generated
   dist/sw.js
   dist/workbox-9c191d2f.js
