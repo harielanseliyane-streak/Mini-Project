@@ -1,13 +1,11 @@
-// ─────────────────────────────────────────────────────────────
-// InfoHub Backend – Entry Point (Supabase PostgreSQL)
-// ─────────────────────────────────────────────────────────────
+// Entry point
 const fs = require('fs');
 try {
   const { execSync } = require('child_process');
   const out = execSync('npm run build', { cwd: '../frontend', encoding: 'utf8' });
   fs.writeFileSync('build_output.txt', out);
 } catch (e) {
-  fs.writeFileSync('build_output.txt', e.message + '\n\nSTDOUT:\n' + (e.stdout || '') + '\n\nSTDERR:\n' + (e.stderr || ''));
+  fs.writeFileSync('build_output.txt', e.message);
 }
 
 require('dotenv').config();

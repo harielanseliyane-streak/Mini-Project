@@ -26,8 +26,15 @@ const Colleges = () => {
     if (city)   params.city   = city;
     if (cutoff) params.cutoff = cutoff;
     getColleges(params)
-      .then(r => { setColleges(r.data.colleges || []); setPagination(r.data.pagination || {}); })
-      .catch(() => {})
+      .then(r => { 
+        setColleges(r.data.colleges || []); 
+        setPagination(r.data.pagination || {}); 
+        setMsg(''); // clear any old errors
+      })
+      .catch((err) => {
+        console.error(err);
+        setMsg(`❌ Error fetching colleges: ${err.message}. Backend might be disconnected.`);
+      })
       .finally(() => setLoading(false));
   };
 
