@@ -5,31 +5,31 @@ const Logo = ({ className = "h-9", showText = true }) => {
     <div className={`flex items-center gap-3 ${className}`}>
       {/* SVG Icon */}
       <svg className="w-10 h-10 flex-shrink-0" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Semicircular arch */}
-        <path d="M35 105C35 60 75 25 100 25C125 25 165 60 165 105" stroke="url(#logo-grad)" strokeWidth="8" strokeLinecap="round" />
+        {/* Rounded square border */}
+        <rect x="15" y="15" width="170" height="170" rx="42" stroke="url(#logo-grad)" strokeWidth="8" fill="none" />
         
         {/* Graduation cap */}
         {/* Cap Diamond */}
-        <path d="M100 50L160 80L100 110L40 80L100 50Z" fill="url(#cap-grad)" />
-        {/* Cap skullcap under the diamond */}
-        <path d="M70 95V115C70 125 80 135 100 135C120 135 130 125 130 115V95" fill="#00a896" />
+        <path d="M100 48L142 68L100 88L58 68Z" fill="url(#cap-grad)" />
+        {/* Cap skullcap */}
+        <path d="M82 78V85C82 96 118 96 118 85V78" fill="#00a896" />
         {/* Cap Tassel */}
-        <path d="M100 80L145 105V120" stroke="#028090" strokeWidth="4" strokeLinecap="round" />
-        <circle cx="145" cy="122" r="5" fill="#028090" />
+        <path d="M100 68L132 80C134 85 134 92 134 100" stroke="#028090" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+        <circle cx="134" cy="102" r="4.5" fill="#028090" />
 
-        {/* Open book */}
-        {/* Left page */}
-        <path d="M100 145C80 135 45 135 25 145V175C45 165 80 165 100 175" fill="none" stroke="#006672" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Right page */}
-        <path d="M100 145C120 135 155 135 175 145V175C155 165 120 165 100 175" fill="none" stroke="#006672" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Stylized torso / lapels */}
+        {/* Left Lapel */}
+        <path d="M50 112H85C93 112 95 118 95 125L100 185C100 185 60 135 50 112Z" fill="url(#logo-grad)" />
+        {/* Right Lapel */}
+        <path d="M150 112H115C107 112 105 118 105 125L100 185C100 185 140 135 150 112Z" fill="url(#logo-grad)" />
         
         {/* Gradients */}
         <defs>
-          <linearGradient id="logo-grad" x1="35" y1="25" x2="165" y2="105" gradientUnits="userSpaceOnUse">
+          <linearGradient id="logo-grad" x1="15" y1="15" x2="185" y2="185" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#006672" />
             <stop offset="100%" stopColor="#00a896" />
           </linearGradient>
-          <linearGradient id="cap-grad" x1="40" y1="50" x2="160" y2="110" gradientUnits="userSpaceOnUse">
+          <linearGradient id="cap-grad" x1="58" y1="48" x2="142" y2="98" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#028090" />
             <stop offset="100%" stopColor="#00a896" />
           </linearGradient>
