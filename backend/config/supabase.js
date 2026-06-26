@@ -4,11 +4,11 @@
 // ─────────────────────────────────────────────────────────────
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl         = process.env.SUPABASE_URL;
-const supabaseServiceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl         = process.env.SUPABASE_URL || 'https://placeholder-project-id.supabase.co';
+const supabaseServiceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-role-key';
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn('⚠️ Warning: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables. File uploads will not function.');
 }
 
 // Use the service role key on the server side so we can write to storage
