@@ -123,7 +123,6 @@ const Home = () => {
         const updated = { ...prev };
         delete updated[id];
         localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
-        window.dispatchEvent(new Event('reminders_updated'));
         return updated;
       });
       showToast(`🔕 Reminder cancelled for: ${title}`);
@@ -138,9 +137,8 @@ const Home = () => {
     if (!pickedDate) { showToast('⚠️ Please pick a date & time first.'); return; }
     const { id, title } = reminderModal;
     setReminders(prev => {
-      const updated = { ...prev, [id]: { date: pickedDate, title } };
+      const updated = { ...prev, [id]: { date: pickedDate } };
       localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
-      window.dispatchEvent(new Event('reminders_updated'));
       return updated;
     });
     showToast(`🔔 Reminder set for: ${new Date(pickedDate).toLocaleString('en-IN')}`);
@@ -221,6 +219,12 @@ const Home = () => {
 
         <div className="relative z-10 text-left px-6 sm:px-12 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
           <div className="max-w-2xl">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-8 animate-fade-in">
+              <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
+              AI-Powered Discovery Engine
+            </div>
+
             {/* Headline */}
             <h1 className="font-heading text-4xl md:text-6xl font-bold text-slate-800 leading-tight mb-6 animate-slide-up">
               Find the Best College for Your

@@ -62,17 +62,17 @@ const CollegeCard = ({ college, onApply, isFavorited, onToggleFavorite }) => {
 
       {/* Stats */}
       <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 bg-slate-50/50">
-        <div className="p-2 md:p-3 text-center">
-          <p className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Min Cutoff</p>
-          <p className="text-xs md:text-sm font-bold text-primary">{college.min_cutoff ?? '—'}</p>
+        <div className="p-3 text-center">
+          <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Min Cutoff</p>
+          <p className="text-sm font-bold text-primary">{college.min_cutoff ?? '—'}</p>
         </div>
-        <div className="p-2 md:p-3 text-center">
-          <p className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Courses</p>
-          <p className="text-xs md:text-sm font-bold text-slate-700">{college.course_count ?? '—'}</p>
+        <div className="p-3 text-center">
+          <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Courses</p>
+          <p className="text-sm font-bold text-slate-700">{college.course_count ?? '—'}</p>
         </div>
-        <div className="p-2 md:p-3 text-center">
-          <p className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Placement</p>
-          <p className={`text-xs md:text-sm font-bold ${placementColor}`}>
+        <div className="p-3 text-center">
+          <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Placement</p>
+          <p className={`text-sm font-bold ${placementColor}`}>
             {college.placement_percent ? `${college.placement_percent}%` : '—'}
           </p>
         </div>
