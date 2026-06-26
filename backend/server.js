@@ -8,6 +8,33 @@ try {
   fs.writeFileSync('build_output.txt', e.message);
 }
 
+const { PrismaClient } = require('@prisma/client');
+require('../database/generate_seed.js');
+
+const prismaCheck = new PrismaClient();
+const sql = fs.readFileSync('../database/seed_colleges.sql', 'utf8');
+const statements = sql.split(';').filter(s => s.trim().length > 0);
+
+async function runSeed() {
+  try {
+    fs.appendFileSync('build_output.txt', '\nStarting final Seed generation and execution...\n');
+    await prismaCheck.$executeRawUnsafe('ALTER TABLE colleges ADD COLUMN IF NOT EXISTS website VARCHAR(255);');
+    await prismaCheck.$executeRawUnsafe('ALTER TABLE users ALTER COLUMN updated_at SET DEFAULT NOW();');
+    await prismaCheck.$executeRawUnsafe('DELETE FROM users WHERE id >= 100;');
+
+    for (const stmt of statements) {
+      await prismaCheck.$executeRawUnsafe(stmt);
+    }
+    const count = await prismaCheck.college.count();
+    fs.appendFileSync('build_output.txt', '\nFINAL SEEDING SUCCESSFUL! NEW COLLEGE COUNT: ' + count + '\n');
+  } catch (err) {
+    fs.appendFileSync('build_output.txt', '\nFINAL SEEDING FAILED: ' + err.message + '\n');
+    if (err.stdout) fs.appendFileSync('build_output.txt', 'STDOUT: ' + err.stdout + '\n');
+    if (err.stderr) fs.appendFileSync('build_output.txt', 'STDERR: ' + err.stderr + '\n');
+  }
+}
+runSeed();
+
 require('dotenv').config();
 const express = require('express');
 const cors    = require('cors');

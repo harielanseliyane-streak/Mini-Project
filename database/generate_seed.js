@@ -145,7 +145,15 @@ function generateSQL() {
     let userId = 100;
     let userValues = [];
     
-    colleges.forEach(college => {
+    const uniqueEmails = new Set();
+    colleges.forEach((college, index) => {
+        let email = college.email;
+        if (uniqueEmails.has(email)) {
+            const parts = email.split('@');
+            email = `${parts[0]}${index}@${parts[1]}`;
+        }
+        uniqueEmails.add(email);
+        college.email = email;
         college.id = userId++;
         // Use a generic bcrypt hash for "college123"
         let hash = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVImSgoeVW";
