@@ -116,29 +116,31 @@ const Home = () => {
   };
 
   // Open date-picker modal to choose reminder date
-  const handleToggleReminder = (id, title) => {
+  const handleToggleReminder = (id, title, type) => {
     if (reminders[id]) {
       // Already set — cancel it
       setReminders(prev => {
         const updated = { ...prev };
         delete updated[id];
         localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
+        window.dispatchEvent(new Event('bulletin_reminders_changed'));
         return updated;
       });
       showToast(`🔕 Reminder cancelled for: ${title}`);
     } else {
       // Open date picker
       setPickedDate('');
-      setReminderModal({ id, title });
+      setReminderModal({ id, title, type });
     }
   };
 
   const handleConfirmReminder = () => {
     if (!pickedDate) { showToast('⚠️ Please pick a date & time first.'); return; }
-    const { id, title } = reminderModal;
+    const { id, title, type } = reminderModal;
     setReminders(prev => {
-      const updated = { ...prev, [id]: { date: pickedDate } };
+      const updated = { ...prev, [id]: { date: pickedDate, title, type } };
       localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
+      window.dispatchEvent(new Event('bulletin_reminders_changed'));
       return updated;
     });
     showToast(`🔔 Reminder set for: ${new Date(pickedDate).toLocaleString('en-IN')}`);
@@ -405,7 +407,7 @@ const Home = () => {
                 <h4 className="font-bold text-slate-800 text-sm leading-snug">{bulletin.title}</h4>
                 <p className="text-xs text-slate-500 leading-relaxed">{bulletin.desc}</p>
                 <button
-                  onClick={() => handleToggleReminder(bulletin.id, bulletin.title)}
+                  onClick={() => handleToggleReminder(bulletin.id, bulletin.title, bulletin.type)}
                   className={`mt-2 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
                     reminders[bulletin.id]
                       ? 'bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/20 w-full'

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info, User, Edit2, Loader2 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, X, HelpCircle, PhoneCall, Info, User, Edit2, Loader2, Bell } from 'lucide-react';
 import Logo from './Logo';
-import { getStudentProfile, updateStudentProfile, getCollegeProfile, updateCollegeProfile } from '../api';
+import { getStudentProfile, updateStudentProfile, getCollegeProfile, updateCollegeProfile, getNotifications, markNotificationAsRead } from '../api';
 import InstallButton from './InstallButton';
 
 const Navbar = () => {
@@ -12,14 +12,81 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // ── Clock widget state ──
+  // ── Notification & Clock states ──
   const [showClock, setShowClock] = useState(false);
   const [clockTime, setClockTime] = useState(new Date());
   const clockRef = useRef(null);
 
+  const [activeTab, setActiveTab] = useState('notifications');
+  const [notifications, setNotifications] = useState([]);
+  const [reminders, setReminders] = useState([]);
+  const [hasTouched, setHasTouched] = useState(false);
+  const [lastNotificationCount, setLastNotificationCount] = useState(0);
+
   const profileRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const fetchDbNotifications = async () => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      return;
+    }
+    try {
+      const res = await getNotifications();
+      if (res.data && res.data.success) {
+        setNotifications(res.data.notifications || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch notifications:", e);
+    }
+  };
+
+  const loadLocalReminders = () => {
+    try {
+      const saved = localStorage.getItem('bulletin_reminders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const arr = Object.keys(parsed).map(id => ({
+          id,
+          isReminder: true,
+          title: parsed[id].title || 'Reminder',
+          type: parsed[id].type || '📢 Reminder',
+          date: parsed[id].date,
+          createdAt: parsed[id].date
+        }));
+        setReminders(arr);
+      } else {
+        setReminders([]);
+      }
+    } catch (e) {
+      console.error(e);
+      setReminders([]);
+    }
+  };
+
+  const handleCancelReminder = (id) => {
+    try {
+      const saved = localStorage.getItem('bulletin_reminders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        delete parsed[id];
+        localStorage.setItem('bulletin_reminders', JSON.stringify(parsed));
+        window.dispatchEvent(new Event('bulletin_reminders_changed'));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (e) {
+      console.error("Failed to mark notification as read:", e);
+    }
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -31,6 +98,39 @@ const Navbar = () => {
       clearInterval(tick);
     };
   }, []);
+
+  // Listen for local storage reminder changes
+  useEffect(() => {
+    loadLocalReminders();
+    const handler = () => {
+      loadLocalReminders();
+    };
+    window.addEventListener('bulletin_reminders_changed', handler);
+    return () => window.removeEventListener('bulletin_reminders_changed', handler);
+  }, []);
+
+  // Fetch db notifications on login change
+  useEffect(() => {
+    fetchDbNotifications();
+  }, [isAuthenticated]);
+
+  // Fetch fresh notifications when dropdown opens
+  useEffect(() => {
+    if (showClock) {
+      fetchDbNotifications();
+    }
+  }, [showClock]);
+
+  // Manage shake animation trigger
+  const unreadDbCount = notifications.filter(n => !n.isRead).length;
+  const totalUnreadCount = unreadDbCount + reminders.length;
+
+  useEffect(() => {
+    if (totalUnreadCount > lastNotificationCount) {
+      setHasTouched(false); // shake again if new notifications arrive
+    }
+    setLastNotificationCount(totalUnreadCount);
+  }, [totalUnreadCount]);
 
   // Close clock on outside click
   useEffect(() => {
@@ -178,72 +278,166 @@ const Navbar = () => {
           {/* ── TOP-LEFT: Clock button + Logo ── */}
           <div className="flex items-center gap-8">
 
-            {/* Clock toggle button */}
+            {/* Clock & Notification toggle button */}
             <div className="relative" ref={clockRef}>
               <button
-                onClick={() => setShowClock(v => !v)}
-                className="navbar-clock-btn"
-                title={showClock ? 'Hide Clock' : 'Show Clock'}
-                aria-label="Toggle analog clock"
+                onMouseEnter={() => setHasTouched(true)}
+                onClick={() => { setShowClock(v => !v); setHasTouched(true); }}
+                className={`navbar-clock-btn ${totalUnreadCount > 0 && !hasTouched ? 'bell-shake' : ''}`}
+                title={showClock ? 'Hide Notifications' : 'Show Notifications'}
+                aria-label="Toggle notifications and clock"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                  strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
+                <Bell className="w-[18px] h-[18px]" />
+                {totalUnreadCount > 0 && (
+                  <span className="navbar-badge">{totalUnreadCount}</span>
+                )}
               </button>
 
-              {/* Swing-in clock dropdown */}
+              {/* Swing-in clock & notifications dropdown */}
               {showClock && (
                 <div className="navbar-clock-popup" key={String(showClock)}>
-                  <svg viewBox="0 0 100 100" fill="none" className="navbar-clock-svg">
-                    {/* Glass face */}
-                    <circle cx="50" cy="50" r="46"
-                      fill="rgba(255,255,255,0.60)"
-                      stroke="#006672" strokeWidth="1.4" strokeOpacity="0.3" />
-
-                    {/* 12 dot ticks (no numbers) */}
-                    {Array.from({ length: 12 }).map((_, i) => {
-                      const a = (i * 30 - 90) * (Math.PI / 180);
-                      const isMaj = i % 3 === 0;
-                      return (
-                        <circle key={i}
-                          cx={50 + 38 * Math.cos(a)}
-                          cy={50 + 38 * Math.sin(a)}
-                          r={isMaj ? 2.2 : 1.1}
-                          fill="#006672"
-                          fillOpacity={isMaj ? 0.7 : 0.35}
-                        />
-                      );
-                    })}
-
-                    {/* Hour hand */}
-                    <line x1="50" y1="50" x2="50" y2="27"
-                      stroke="#006672" strokeWidth="4.5" strokeLinecap="round"
-                      style={{ transform: `rotate(${hourDeg}deg)`, transformOrigin: '50px 50px',
-                        transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
-                    />
-                    {/* Minute hand */}
-                    <line x1="50" y1="52" x2="50" y2="14"
-                      stroke="#028090" strokeWidth="2.8" strokeLinecap="round"
-                      style={{ transform: `rotate(${minDeg}deg)`, transformOrigin: '50px 50px',
-                        transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
-                    />
-                    {/* Second hand */}
-                    <line x1="50" y1="58" x2="50" y2="11"
-                      stroke="#e05a00" strokeWidth="1.3" strokeLinecap="round"
-                      style={{ transform: `rotate(${secDeg}deg)`, transformOrigin: '50px 50px',
-                        transition: 'transform 0.18s linear' }}
-                    />
-                    {/* Center cap */}
-                    <circle cx="50" cy="50" r="3.5" fill="#006672" />
-                    <circle cx="50" cy="50" r="1.4" fill="white" />
-                  </svg>
-
-                  {/* Digital time label */}
-                  <div className="navbar-clock-label">
-                    {clockTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                  {/* Tabs header */}
+                  <div className="navbar-notification-tabs">
+                    <button
+                      onClick={() => setActiveTab('notifications')}
+                      className={`navbar-notification-tab ${activeTab === 'notifications' ? 'active' : ''}`}
+                    >
+                      Notifications ({totalUnreadCount})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('clock')}
+                      className={`navbar-notification-tab ${activeTab === 'clock' ? 'active' : ''}`}
+                    >
+                      Clock
+                    </button>
                   </div>
+
+                  {/* Tab contents */}
+                  {activeTab === 'notifications' ? (
+                    <div className="navbar-notification-list scrollbar-premium">
+                      {/* Combined list of DB notifications & reminders */}
+                      {(() => {
+                        const dbItems = notifications.map(n => ({
+                          id: n.id,
+                          isReminder: false,
+                          title: n.title,
+                          message: n.message,
+                          isRead: n.isRead,
+                          date: n.createdAt
+                        }));
+                        
+                        const allItems = [...reminders, ...dbItems].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                        if (allItems.length === 0) {
+                          return (
+                            <div className="navbar-notification-empty">
+                              🔔 No notifications or reminders
+                            </div>
+                          );
+                        }
+
+                        return allItems.map((item, idx) => (
+                          <div 
+                            key={item.isReminder ? `rem-${item.id}-${idx}` : `db-${item.id}-${idx}`} 
+                            className={`navbar-notification-item ${!item.isReminder && !item.isRead ? 'border-l-4 border-l-primary' : ''}`}
+                          >
+                            <div className="flex justify-between items-start gap-1">
+                              <span className="navbar-notification-title">
+                                {item.isReminder ? `⏰ ${item.title}` : item.title}
+                              </span>
+                              {item.isReminder ? (
+                                <span className="px-1.5 py-0.5 rounded bg-secondary/15 text-secondary text-[8px] font-extrabold uppercase">
+                                  Reminder
+                                </span>
+                              ) : !item.isRead && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0 mt-1" />
+                              )}
+                            </div>
+                            <p className="navbar-notification-message text-xs">
+                              {item.isReminder 
+                                ? `Scheduled for: ${new Date(item.date).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })}`
+                                : item.message
+                              }
+                            </p>
+                            <div className="navbar-notification-meta">
+                              <span className="navbar-notification-date">
+                                {item.isReminder ? 'Set Locally' : new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                              </span>
+                              {item.isReminder ? (
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleCancelReminder(item.id); }}
+                                  className="navbar-notification-action"
+                                >
+                                  Cancel
+                                </button>
+                              ) : !item.isRead && (
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleMarkAsRead(item.id); }}
+                                  className="navbar-notification-action"
+                                >
+                                  Read
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  ) : (
+                    /* Clock tab */
+                    <div className="flex flex-col items-center justify-center p-2 relative h-[160px] w-full">
+                      <div className="w-[120px] h-[120px] relative">
+                        <svg viewBox="0 0 100 100" fill="none" className="navbar-clock-svg w-full h-full">
+                          {/* Glass face */}
+                          <circle cx="50" cy="50" r="46"
+                            fill="rgba(255,255,255,0.60)"
+                            stroke="#006672" strokeWidth="1.4" strokeOpacity="0.3" />
+
+                          {/* 12 dot ticks */}
+                          {Array.from({ length: 12 }).map((_, i) => {
+                            const a = (i * 30 - 90) * (Math.PI / 180);
+                            const isMaj = i % 3 === 0;
+                            return (
+                              <circle key={i}
+                                cx={50 + 38 * Math.cos(a)}
+                                cy={50 + 38 * Math.sin(a)}
+                                r={isMaj ? 2.2 : 1.1}
+                                fill="#006672"
+                                fillOpacity={isMaj ? 0.7 : 0.35}
+                              />
+                            );
+                          })}
+
+                          {/* Hour hand */}
+                          <line x1="50" y1="50" x2="50" y2="27"
+                            stroke="#006672" strokeWidth="4.5" strokeLinecap="round"
+                            style={{ transform: `rotate(${hourDeg}deg)`, transformOrigin: '50px 50px',
+                              transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
+                          />
+                          {/* Minute hand */}
+                          <line x1="50" y1="52" x2="50" y2="14"
+                            stroke="#028090" strokeWidth="2.8" strokeLinecap="round"
+                            style={{ transform: `rotate(${minDeg}deg)`, transformOrigin: '50px 50px',
+                              transition: 'transform 0.5s cubic-bezier(0.4,2.2,0.6,1)' }}
+                          />
+                          {/* Second hand */}
+                          <line x1="50" y1="58" x2="50" y2="11"
+                            stroke="#e05a00" strokeWidth="1.3" strokeLinecap="round"
+                            style={{ transform: `rotate(${secDeg}deg)`, transformOrigin: '50px 50px',
+                              transition: 'transform 0.18s linear' }}
+                          />
+                          {/* Center cap */}
+                          <circle cx="50" cy="50" r="3.5" fill="#006672" />
+                          <circle cx="50" cy="50" r="1.4" fill="white" />
+                        </svg>
+
+                        {/* Digital time label */}
+                        <div className="navbar-clock-label">
+                          {clockTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
