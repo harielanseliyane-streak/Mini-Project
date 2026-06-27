@@ -17,18 +17,18 @@ export default {
         cardLight: '#FFFFFF',
         borderLight: 'rgba(0,0,0,0.06)',
         
-        // Brand & Palette (Exact User Color #009A8E)
+        // Brand & Palette (Solid #009A8E Everywhere)
         primary: {
-          DEFAULT: '#009A8E', // User exact Teal-Emerald
+          DEFAULT: '#009A8E',
           hover: '#007A70',
         },
         secondary: {
-          DEFAULT: '#00BFA9', // Lighter Teal-Emerald Accent
-          hover: '#009A8E',
+          DEFAULT: '#009A8E',
+          hover: '#007A70',
         },
         purple: {
-          DEFAULT: '#008479', // Deep Teal Accent
-          hover: '#006E64',
+          DEFAULT: '#009A8E',
+          hover: '#007A70',
         },
         accent: '#009A8E',
         success: '#009A8E',

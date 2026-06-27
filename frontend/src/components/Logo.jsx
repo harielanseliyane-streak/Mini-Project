@@ -12,7 +12,7 @@ const Logo = ({ className = "h-9", showText = true }) => {
         {/* Cap Diamond */}
         <path d="M100 48L142 68L100 88L58 68Z" fill="url(#cap-grad)" />
         {/* Cap skullcap */}
-        <path d="M82 78V85C82 96 118 96 118 85V78" fill="#00BFA9" />
+        <path d="M82 78V85C82 96 118 96 118 85V78" fill="#009A8E" />
         {/* Cap Tassel */}
         <path d="M100 68L132 80C134 85 134 92 134 100" stroke="#009A8E" strokeWidth="3.5" strokeLinecap="round" fill="none" />
         <circle cx="134" cy="102" r="4.5" fill="#009A8E" />
@@ -27,11 +27,11 @@ const Logo = ({ className = "h-9", showText = true }) => {
         <defs>
           <linearGradient id="logo-grad" x1="15" y1="15" x2="185" y2="185" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#009A8E" />
-            <stop offset="100%" stopColor="#00BFA9" />
+            <stop offset="100%" stopColor="#009A8E" />
           </linearGradient>
           <linearGradient id="cap-grad" x1="58" y1="48" x2="142" y2="98" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#008479" />
-            <stop offset="100%" stopColor="#00BFA9" />
+            <stop offset="0%" stopColor="#009A8E" />
+            <stop offset="100%" stopColor="#009A8E" />
           </linearGradient>
         </defs>
       </svg>
@@ -40,7 +40,7 @@ const Logo = ({ className = "h-9", showText = true }) => {
         <div className="flex flex-col justify-center leading-none">
           <div className="font-heading font-extrabold text-xl tracking-tight text-slate-800">
             <span className="text-[#009A8E]">Info</span>
-            <span className="text-[#00BFA9] font-semibold">-Hub</span>
+            <span className="text-[#009A8E] font-semibold">-Hub</span>
           </div>
           <span className="text-[7px] uppercase font-bold tracking-[0.22em] text-[#009A8E] mt-1.5">
             Explore • Learn • Succeed

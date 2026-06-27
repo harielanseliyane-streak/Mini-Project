@@ -86,7 +86,7 @@ const Register = () => {
             <Logo showText={false} />
             <span className="font-heading font-extrabold text-3xl tracking-tight text-slate-800">
               <span className="text-[#009A8E]">Info</span>
-              <span className="text-[#00BFA9] font-semibold">-Hub</span>
+              <span className="text-[#009A8E] font-semibold">-Hub</span>
             </span>
           </Link>
           <h1 className="font-heading text-3xl font-bold text-slate-800 tracking-wide">Create Account</h1>

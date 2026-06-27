@@ -106,10 +106,7 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #009A8E 0%, #00BFA9 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #009A8E;
   }
 }
 
@@ -120,13 +117,14 @@
   animation: shimmer 1.5s infinite linear;
 }
 
-/* ── UI Theme Direct Overrides (Exact User Color #009A8E Palette) ── */
+/* ── UI Theme Direct Overrides (Solid User Color #009A8E Everywhere) ── */
 .btn-primary, .bg-primary {
-  background: linear-gradient(135deg, #009A8E 0%, #00BFA9 100%) !important;
+  background-color: #009A8E !important;
+  background-image: none !important;
   color: #ffffff !important;
 }
 .btn-primary:hover, .bg-primary:hover {
-  background: linear-gradient(135deg, #007A70 0%, #009A8E 100%) !important;
+  background-color: #007A70 !important;
   box-shadow: 0 4px 20px -2px rgba(0, 154, 142, 0.4) !important;
 }
 
@@ -136,7 +134,7 @@
   background-color: transparent !important;
 }
 .btn-secondary:hover {
-  background: linear-gradient(135deg, #009A8E 0%, #00BFA9 100%) !important;
+  background-color: #009A8E !important;
   color: #ffffff !important;
   border-color: transparent !important;
 }
@@ -145,7 +143,7 @@
   color: #009A8E !important;
 }
 .text-secondary, .hover\:text-secondary:hover {
-  color: #00BFA9 !important;
+  color: #009A8E !important;
 }
 
 .from-primary {
@@ -154,14 +152,14 @@
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 .to-secondary {
-  --tw-gradient-to: #00BFA9 !important;
+  --tw-gradient-to: #009A8E !important;
 }
 
 .border-primary {
   border-color: #009A8E !important;
 }
 .border-secondary {
-  border-color: #00BFA9 !important;
+  border-color: #009A8E !important;
 }
 
 .focus\:border-primary:focus {
@@ -228,7 +226,7 @@
   position: absolute;
   bottom: -10px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 191, 169, 0.45) 0%, rgba(0, 154, 142, 0.15) 100%);
+  background: radial-gradient(circle, rgba(0, 154, 142, 0.45) 0%, rgba(0, 154, 142, 0.15) 100%);
   animation: floatUp linear infinite;
   filter: blur(0.5px);
 }
@@ -245,7 +243,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #009A8E, #00BFA9);
+  background-color: #009A8E;
   color: #fff;
   border: none;
   cursor: pointer;
@@ -259,7 +257,7 @@
 }
 .navbar-clock-btn:hover {
   transform: scale(1.12);
-  box-shadow: 0 4px 18px rgba(0,191,169,0.45);
+  box-shadow: 0 4px 18px rgba(0,154,142,0.45);
 }
 .navbar-clock-btn:active {
   transform: scale(0.93);
@@ -354,7 +352,7 @@
 }
 .navbar-notification-tab:hover:not(.active) {
   background: rgba(0, 154, 142, 0.03);
-  color: #00BFA9;
+  color: #009A8E;
 }
 
 /* ── Notification Badge ── */
@@ -431,7 +429,7 @@
 .navbar-notification-action {
   font-size: 9px;
   font-weight: 700;
-  color: #00BFA9;
+  color: #009A8E;
   cursor: pointer;
   background: transparent;
   border: none;
@@ -440,8 +438,8 @@
   transition: all 0.15s ease;
 }
 .navbar-notification-action:hover {
-  background: rgba(0, 191, 169, 0.1);
-  color: #009A8E;
+  background: rgba(0, 154, 142, 0.1);
+  color: #007A70;
 }
 
 .navbar-notification-empty {
