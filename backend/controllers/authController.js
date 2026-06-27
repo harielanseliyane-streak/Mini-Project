@@ -27,9 +27,11 @@ const register = async (req, res) => {
     if (password.length < 6)
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
 
+    const cleanEmail = email.trim().toLowerCase();
+
     // Check existing email
-    const existing = await prisma.user.findUnique({
-      where: { email },
+    const existing = await prisma.user.findFirst({
+      where: { email: cleanEmail },
     });
     if (existing)
       return res.status(409).json({ success: false, message: 'Email already registered' });
@@ -44,7 +46,7 @@ const register = async (req, res) => {
         data: {
           role,
           name: displayName,
-          email,
+          email: cleanEmail,
           passwordHash,
           phone: phone || null,
         },
@@ -81,7 +83,7 @@ const register = async (req, res) => {
     });
   } catch (err) {
     console.error('Register error:', err);
-    return res.status(500).json({ success: false, message: 'Registration failed', error: err.message });
+    return res.status(500).json({ success: false, message: 'Registration failed. Please check your details or try logging in.' });
   }
 };
 
@@ -93,10 +95,12 @@ const login = async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ success: false, message: 'Email and password are required' });
 
+    const cleanEmail = email.trim().toLowerCase();
+
     // Fetch user
     const user = await prisma.user.findFirst({
       where: {
-        email,
+        email: cleanEmail,
         ...(role && { role }),
       },
     });
@@ -119,7 +123,7 @@ const login = async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ success: false, message: 'Login failed', error: err.message });
+    return res.status(500).json({ success: false, message: 'Login failed. Please verify your credentials and try again.' });
   }
 };
 

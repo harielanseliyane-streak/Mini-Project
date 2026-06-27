@@ -453,12 +453,13 @@ const StudentDashboard = () => {
                   <div key={item.id} className="card-premium p-5 flex flex-col justify-between hover:border-primary/20 transition-all">
                     <div>
                       <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center text-xl flex-shrink-0">
-                          {item.details?.logo ? (
-                            <img src={item.details.logo.startsWith('http') ? item.details.logo : `/uploads/logos/${item.details.logo}`} alt={item.details.collegeName} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>🏛️</span>
-                          )}
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden shadow-sm">
+                          <img 
+                            src={item.details?.logo ? (item.details.logo.startsWith('http') ? item.details.logo : `/uploads/logos/${item.details.logo}`) : 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=300&q=80'} 
+                            alt={item.details?.collegeName || 'College'} 
+                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=300&q=80'; }}
+                            className="w-full h-full object-cover" 
+                          />
                         </div>
                         <div>
                           <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2">{item.details?.collegeName}</h3>

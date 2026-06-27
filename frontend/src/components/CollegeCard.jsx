@@ -33,15 +33,16 @@ const CollegeCard = ({ college, onApply, isFavorited, onToggleFavorite }) => {
       {/* Card Header */}
       <div className="p-5 pb-4 border-b border-slate-100">
         <div className="flex items-start gap-4">
-          {/* Logo */}
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {college.logo ? (
-              <img src={college.logo.startsWith('http') ? college.logo : `/uploads/logos/${college.logo}`} alt={college.college_name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-2xl">🏛️</span>
-            )}
+          {/* Logo with dummy image fallback */}
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+            <img 
+              src={college.logo ? (college.logo.startsWith('http') ? college.logo : `/uploads/logos/${college.logo}`) : 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=300&q=80'} 
+              alt={college.college_name} 
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=300&q=80'; }}
+              className="w-full h-full object-cover" 
+            />
           </div>
-          <div className="flex-1 min-w-0 pr-8">
+          <div className="flex-1 min-w-0 pr-6">
             <h3 className="font-heading font-semibold text-slate-800 text-base leading-snug line-clamp-2 hover:text-primary transition-colors">
               {college.college_name}
             </h3>
@@ -49,15 +50,15 @@ const CollegeCard = ({ college, onApply, isFavorited, onToggleFavorite }) => {
               <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               {college.city}, {college.state}
             </p>
+            {college.accreditation && (
+              <div className="mt-2">
+                <span className="inline-block text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-semibold shadow-2xs">
+                  🏆 {college.accreditation}
+                </span>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Accreditation badge (if no favorite button or positioned accordingly) */}
-        {college.accreditation && !isStudent && (
-          <span className="absolute top-4 right-4 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
-            {college.accreditation}
-          </span>
-        )}
       </div>
 
       {/* Stats */}

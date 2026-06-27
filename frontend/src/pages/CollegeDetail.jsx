@@ -43,12 +43,17 @@ const CollegeDetail = () => {
         <div className="glass rounded-2xl p-8 mb-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10" />
           <div className="relative flex flex-wrap items-start gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-slate-200/80 flex items-center justify-center text-4xl">
-              {college.logo ? <img src={college.logo.startsWith('http') ? college.logo : `/uploads/logos/${college.logo}`} className="w-full h-full object-cover rounded-2xl" alt="logo" /> : '🏛️'}
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-slate-200/80 flex items-center justify-center text-4xl overflow-hidden shadow-md flex-shrink-0">
+              <img 
+                src={college.logo ? (college.logo.startsWith('http') ? college.logo : `/uploads/logos/${college.logo}`) : 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=300&q=80'} 
+                className="w-full h-full object-cover rounded-2xl" 
+                alt="logo" 
+                onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=300&q=80'; }}
+              />
             </div>
             <div className="flex-1">
               <div className="flex flex-wrap gap-2 mb-2">
-                {college.accreditation && <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">{college.accreditation}</span>}
+                {college.accreditation && <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold shadow-2xs">🏆 {college.accreditation}</span>}
               </div>
               <h1 className="font-heading text-3xl font-bold text-slate-800">{college.college_name}</h1>
               <p className="text-slate-500 mt-1">📍 {college.address}, {college.city}, {college.state}</p>
