@@ -5,6 +5,7 @@ import CollegeCard from '../components/CollegeCard';
 import { useAuth } from '../context/AuthContext';
 import { Bell, BellOff, X, Megaphone, Check, CalendarClock } from 'lucide-react';
 import BirdCanvas from '../components/BirdCanvas';
+import collegeBgTeal from '../college-bg-teal.png';
 
 const StatCard = ({ value, label, icon }) => (
   <div className="glass rounded-2xl p-6 text-center">
@@ -268,20 +269,22 @@ const Home = () => {
           </div>
 
           {/* ── College Illustration (right side) ── */}
-          <div className="hidden lg:block relative self-end">
+          <div className="hidden lg:flex items-end justify-end relative" style={{ minHeight: '520px' }}>
             {/* Soft radial glow behind the image */}
             <div
               className="absolute inset-0 pointer-events-none z-0"
               style={{
-                background: 'radial-gradient(ellipse 80% 70% at 60% 70%, rgba(0,179,165,0.10) 0%, transparent 70%)',
+                background: 'radial-gradient(ellipse 80% 80% at 55% 65%, rgba(0,179,165,0.12) 0%, rgba(0,154,142,0.04) 60%, transparent 100%)',
               }}
             />
             <img
-              src="/college-bg-teal.png"
+              src={collegeBgTeal}
               alt="College building illustration"
-              className="relative z-10 w-full max-w-[680px] ml-auto object-contain select-none pointer-events-none"
+              className="relative z-10 w-full object-contain select-none pointer-events-none"
               style={{
-                filter: 'drop-shadow(0 32px 64px rgba(0,154,142,0.13))',
+                maxWidth: '680px',
+                maxHeight: '560px',
+                filter: 'drop-shadow(0 20px 40px rgba(0,154,142,0.15))',
                 animation: 'float 8s ease-in-out infinite',
                 animationDelay: '0.5s',
               }}
