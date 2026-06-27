@@ -1,70 +1,79 @@
 // ─────────────────────────────────────────────────────────────
-// Auth Context – Supabase Auth (replaces JWT/axios-based auth)
+// Auth Context – Supabase JWT Custom Authentication Flow
 // ─────────────────────────────────────────────────────────────
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { login as apiLogin, register as apiRegister } from '../api';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user,    setUser]    = useState(null);   // profile row (with role)
-  const [session, setSession] = useState(null);   // supabase session
+  const [session, setSession] = useState(null);   // custom session
   const [loading, setLoading] = useState(true);
 
-  // Load profile row for a given auth user id
-  const loadProfile = useCallback(async (authUser) => {
-    if (!authUser) { setUser(null); return; }
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
-    if (data) setUser({ ...data, email: authUser.email });
-  }, []);
-
-  // Bootstrap: restore session on mount
+  // Load session from localStorage on mount
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      loadProfile(session?.user ?? null).finally(() => setLoading(false));
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      loadProfile(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [loadProfile]);
-
-  // ── Login with Supabase Auth ───────────────────────────────
-  const login = useCallback(async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
+    const savedSession = localStorage.getItem('mock_session');
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        setSession(parsed.session);
+        setUser(parsed.user);
+      } catch (e) {
+        console.error('Failed to parse saved session', e);
+        localStorage.removeItem('mock_session');
+      }
+    }
+    setLoading(false);
   }, []);
 
-  // ── Register with Supabase Auth ───────────────────────────
+  // ── Login with Supabase custom verifier ─────────────────────
+  const login = useCallback(async (email, password) => {
+    const res = await apiLogin(email, password);
+    setSession(res.data.session);
+    setUser(res.data.user);
+    return res;
+  }, []);
+
+  // ── Register with Supabase custom creator ──────────────────
   const signUp = useCallback(async (email, password, metadata) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: metadata },
-    });
-    if (error) throw error;
-    return data;
+    const res = await apiRegister({ email, password, role: metadata.role, ...metadata });
+    setSession(res.session);
+    setUser(res.user);
+    return { data: { session: res.session, user: res.user }, error: null };
   }, []);
 
   // ── Logout ────────────────────────────────────────────────
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('mock_session');
     setUser(null);
     setSession(null);
+    
+    // Clear session in supabase client
+    await supabase.auth.signOut().catch(() => {});
+    
+    window.dispatchEvent(new Event('storage'));
   }, []);
+
 
   // ── Update local user state ───────────────────────────────
   const updateUser = useCallback((updates) => {
-    setUser(prev => prev ? { ...prev, ...updates } : prev);
+    setUser(prev => {
+      const updated = prev ? { ...prev, ...updates } : prev;
+      if (updated) {
+        const savedSession = localStorage.getItem('mock_session');
+        if (savedSession) {
+          try {
+            const parsed = JSON.parse(savedSession);
+            parsed.user = updated;
+            parsed.session.user = updated;
+            localStorage.setItem('mock_session', JSON.stringify(parsed));
+          } catch (e) {}
+        }
+      }
+      return updated;
+    });
   }, []);
 
   return (
@@ -83,3 +92,4 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
+
