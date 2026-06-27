@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { register as apiRegister } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
+import BirdCanvas from '../components/BirdCanvas';
 
 const Field = ({ label, value, onChange, type = 'text', placeholder, required }) => (
   <div>
@@ -58,22 +59,36 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center px-4 py-20 pt-24 bg-slate-50 overflow-hidden">
-      {/* Full-bleed college background image with light gradient overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 scale-105 transition-transform duration-1000"
-        style={{ backgroundImage: "url('/college-bg-teal.png')" }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-tr from-white via-slate-50/90 to-teal-50/40 pointer-events-none" />
+    <div 
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16 px-4 bg-white"
+      style={{
+        backgroundImage: 'linear-gradient(to right, #ffffff 0%, #ffffff 40%, rgba(255,255,255,0.7) 65%, rgba(255,255,255,0.1) 100%), url(/college-bg-teal.png)',
+        backgroundSize: 'contain',
+        backgroundPosition: 'right center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Flying Birds Layer */}
+      <BirdCanvas />
 
-      {/* Decorative glowing background orbs in primary teal color palette */}
-      <div className="fixed top-1/4 right-1/4 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none animate-pulse" />
-      <div className="fixed bottom-1/4 left-1/4 w-96 h-96 rounded-full bg-secondary/15 blur-3xl pointer-events-none" />
+      {/* Floating Dust / Light Particles */}
+      <div aria-hidden="true" className="hero-particles">
+        {Array.from({ length: 18 }).map((_, i) => (
+          <span key={i} className="hero-particle" style={{
+            left: `${5 + (i * 5.3) % 95}%`,
+            animationDelay: `${(i * 0.43) % 6}s`,
+            animationDuration: `${7 + (i * 1.1) % 8}s`,
+            width:  `${3 + (i * 0.7) % 5}px`,
+            height: `${3 + (i * 0.7) % 5}px`,
+            opacity: 0.12 + (i % 5) * 0.06,
+          }} />
+        ))}
+      </div>
 
       <div className="relative w-full max-w-lg animate-slide-up z-10 my-4">
         {/* Logo Header */}
-        <div className="text-center mb-8 flex flex-col items-center">
-          <Link to="/" className="inline-flex items-center gap-3 mb-4 group">
+        <div className="text-center mb-6 flex flex-col items-center">
+          <Link to="/" className="inline-flex items-center gap-3 mb-3 group">
             <Logo showText={false} />
             <span className="font-heading font-extrabold text-3xl tracking-tight text-slate-800">
               <span className="text-[#006672]">Info</span>
@@ -81,7 +96,7 @@ const Register = () => {
             </span>
           </Link>
           <h1 className="font-heading text-3xl font-bold text-slate-800 tracking-wide">Create Account</h1>
-          <p className="text-slate-500 mt-2 text-sm">Join the InfoHub smart connectivity platform</p>
+          <p className="text-slate-500 mt-1.5 text-sm">Join the InfoHub smart connectivity platform</p>
         </div>
 
         {/* Form Card with Glassmorphism */}
