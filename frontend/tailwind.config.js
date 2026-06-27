@@ -17,21 +17,21 @@ export default {
         cardLight: '#FFFFFF',
         borderLight: 'rgba(0,0,0,0.06)',
         
-        // Brand & Palette (Solid #009A8E Everywhere)
+        // Brand & Palette (Dark Turquoise Theme)
         primary: {
-          DEFAULT: '#009A8E',
-          hover: '#007A70',
+          DEFAULT: '#008B8B', // Deep Dark Turquoise (for contrast & readability)
+          hover: '#006B6B',
         },
         secondary: {
-          DEFAULT: '#009A8E',
-          hover: '#007A70',
+          DEFAULT: '#00CED1', // Vibrant Dark Turquoise
+          hover: '#00A8AB',
         },
         purple: {
-          DEFAULT: '#009A8E',
-          hover: '#007A70',
+          DEFAULT: '#00979C',
+          hover: '#007A7D',
         },
-        accent: '#009A8E',
-        success: '#009A8E',
+        accent: '#00CED1',
+        success: '#00CED1',
         warning: '#F59E0B',
         danger: '#EF4444',
         

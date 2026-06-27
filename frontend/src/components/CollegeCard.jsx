@@ -24,7 +24,7 @@ const CollegeCard = ({ college, onApply, isFavorited, onToggleFavorite }) => {
         >
           <Heart 
             className={`w-4 h-4 transition-colors ${
-              isFavorited ? 'fill-[#009A8E] text-[#009A8E]' : 'text-slate-400 hover:text-[#009A8E]'
+              isFavorited ? 'fill-[#00CED1] text-[#00CED1]' : 'text-slate-400 hover:text-[#00CED1]'
             }`} 
           />
         </button>
