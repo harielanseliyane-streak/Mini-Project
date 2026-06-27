@@ -195,7 +195,7 @@ const Home = () => {
       <section 
         className="relative min-h-screen flex items-center overflow-hidden pt-16 bg-white"
         style={{
-          backgroundImage: 'linear-gradient(to right, #ffffff 0%, #ffffff 40%, rgba(255,255,255,0.7) 65%, rgba(255,255,255,0.1) 100%), url(/college-bg-teal.png)',
+          backgroundImage: 'linear-gradient(to right, #ffffff 0%, #ffffff 35%, rgba(255,255,255,0.85) 60%, rgba(255,255,255,0.2) 100%), url(/sketch-bg.png), url(/college-bg-teal.png)',
           backgroundSize: 'contain',
           backgroundPosition: 'right center',
           backgroundRepeat: 'no-repeat'

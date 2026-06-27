@@ -62,7 +62,7 @@ const Register = () => {
     <div 
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16 px-4 bg-white"
       style={{
-        backgroundImage: 'linear-gradient(to right, #ffffff 0%, #ffffff 40%, rgba(255,255,255,0.7) 65%, rgba(255,255,255,0.1) 100%), url(/college-bg-teal.png)',
+        backgroundImage: 'linear-gradient(to right, #ffffff 0%, #ffffff 35%, rgba(255,255,255,0.85) 60%, rgba(255,255,255,0.2) 100%), url(/sketch-bg.png), url(/college-bg-teal.png)',
         backgroundSize: 'contain',
         backgroundPosition: 'right center',
         backgroundRepeat: 'no-repeat'
@@ -91,8 +91,8 @@ const Register = () => {
           <Link to="/" className="inline-flex items-center gap-3 mb-3 group">
             <Logo showText={false} />
             <span className="font-heading font-extrabold text-3xl tracking-tight text-slate-800">
-              <span className="text-[#006672]">Info</span>
-              <span className="text-[#00a896] font-semibold">-Hub</span>
+              <span className="text-[#1B365D]">Info</span>
+              <span className="text-[#C59B27] font-semibold">-Hub</span>
             </span>
           </Link>
           <h1 className="font-heading text-3xl font-bold text-slate-800 tracking-wide">Create Account</h1>
