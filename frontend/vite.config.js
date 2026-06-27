@@ -42,16 +42,10 @@ export default defineConfig({
       }
     })
   ],
-  // Local dev proxy – NOT used in Vercel production (VITE_API_URL handles that)
   server: {
     port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
-    },
   },
+
   build: {
     outDir: 'dist',
     // Ensure assets are correctly referenced from the root

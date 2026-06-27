@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { login as apiLogin } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -20,7 +19,11 @@ const Login = () => {
   }, [params]);
 
   useEffect(() => {
-    if (isAuthenticated) navigate(user?.role === 'student' ? '/student/dashboard' : '/college/dashboard', { replace: true });
+    if (isAuthenticated && user) {
+      if (user.role === 'admin')   navigate('/admin/dashboard',   { replace: true });
+      else if (user.role === 'college') navigate('/college/dashboard', { replace: true });
+      else navigate('/student/dashboard', { replace: true });
+    }
   }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
@@ -29,10 +32,10 @@ const Login = () => {
     if (!email || !password) { setError('Please fill in all fields'); return; }
     setLoading(true);
     try {
-      const { data } = await apiLogin({ email, password, role });
-      login(data.user, data.token);
+      const { error: authErr } = await login(email, password);
+      if (authErr) throw authErr;
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

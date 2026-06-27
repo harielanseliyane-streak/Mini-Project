@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  getStudentProfile, updateStudentProfile, uploadStudentPhoto,
+  getFullStudentProfile, updateStudentProfile, uploadStudentPhoto,
   getColleges, getRecommendations, getMyApplications, applyToCollege,
-  getSavedItems, removeSavedItem, saveItem
+  getSavedItems, removeSavedItem, saveItem,
 } from '../api';
 import CollegeCard from '../components/CollegeCard';
 
@@ -38,84 +38,66 @@ const StudentDashboard = () => {
 
   // Load profile on mount
   useEffect(() => {
-    getStudentProfile()
-      .then(r => { setProfile(r.data.student); setEditForm(r.data.student); })
+    if (!user?.id) return;
+    getFullStudentProfile(user.id)
+      .then(p => { setProfile(p); setEditForm(p); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [user?.id]);
 
   // Lazy-load tabs
   useEffect(() => {
+    if (!user?.id) return;
     if (tab === 'colleges') {
       getColleges({ search, cutoff: cutoffFilter })
-        .then(r => setColleges(r.data.colleges || []))
+        .then(r => setColleges(r.colleges || []))
         .catch(() => {});
-      
-      getSavedItems()
-        .then(res => {
-          const items = res.data.saved_items || [];
+      getSavedItems(user.id)
+        .then(items => {
           const mapping = {};
-          items.forEach(item => {
-            if (item.type === 'college') mapping[item.item_id] = item.id;
-          });
+          items.filter(i => i.type === 'college').forEach(item => { mapping[item.item_id] = item.id; });
           setFavoritesMap(mapping);
         })
         .catch(() => {});
     }
     if (tab === 'recommendations') {
-      getRecommendations()
-        .then(r => setRecommendations(r.data.recommendations))
+      getRecommendations(user.id)
+        .then(r => setRecommendations(r))
         .catch(() => {});
     }
     if (tab === 'applications') {
-      getMyApplications()
-        .then(r => setApplications(r.data.applications || []))
+      getMyApplications(user.id)
+        .then(apps => setApplications(apps))
         .catch(() => {});
     }
     if (tab === 'favorites') {
-      getSavedItems()
-        .then(res => {
-          const items = res.data.saved_items || [];
+      getSavedItems(user.id)
+        .then(items => {
           setSavedItems(items);
           const mapping = {};
-          items.forEach(item => {
-            if (item.type === 'college') mapping[item.item_id] = item.id;
-          });
+          items.filter(i => i.type === 'college').forEach(item => { mapping[item.item_id] = item.id; });
           setFavoritesMap(mapping);
         })
         .catch(() => {});
     }
-  }, [tab]);
+  }, [tab, user?.id]);
 
   const handleToggleFavorite = async (collegeId) => {
     const savedId = favoritesMap[collegeId];
     if (savedId) {
       try {
         await removeSavedItem(savedId);
-        setFavoritesMap(prev => {
-          const updated = { ...prev };
-          delete updated[collegeId];
-          return updated;
-        });
+        setFavoritesMap(prev => { const u = { ...prev }; delete u[collegeId]; return u; });
         setSavedItems(prev => prev.filter(item => item.id !== savedId));
-        setMsg("✅ Removed from favorites");
-      } catch (e) {
-        setMsg("❌ Failed to remove favorite");
-      }
+        setMsg('✅ Removed from favorites');
+      } catch { setMsg('❌ Failed to remove favorite'); }
     } else {
       try {
-        const res = await saveItem('college', collegeId);
-        const newItem = res.data.saved;
-        setFavoritesMap(prev => ({
-          ...prev,
-          [collegeId]: newItem.id
-        }));
-        setMsg("✅ Added to favorites! ❤️");
-        // Re-load saved list to refresh layout if favorited
-        getSavedItems().then(res => setSavedItems(res.data.saved_items || []));
-      } catch (e) {
-        setMsg("❌ Failed to add favorite");
-      }
+        const newItem = await saveItem(user.id, 'college', collegeId);
+        setFavoritesMap(prev => ({ ...prev, [collegeId]: newItem.id }));
+        setMsg('✅ Added to favorites! ❤️');
+        getSavedItems(user.id).then(setSavedItems).catch(() => {});
+      } catch { setMsg('❌ Failed to add favorite'); }
     }
     setTimeout(() => setMsg(''), 3000);
   };
@@ -124,56 +106,53 @@ const StudentDashboard = () => {
     try {
       await removeSavedItem(savedId);
       setSavedItems(prev => prev.filter(item => item.id !== savedId));
-      // update map
       setFavoritesMap(prev => {
-        const updated = { ...prev };
-        const key = Object.keys(updated).find(k => updated[k] === savedId);
-        if (key) delete updated[key];
-        return updated;
+        const u = { ...prev };
+        const key = Object.keys(u).find(k => u[k] === savedId);
+        if (key) delete u[key];
+        return u;
       });
-      setMsg("✅ Removed from favorites");
-    } catch {
-      setMsg("❌ Failed to remove favorite");
-    }
+      setMsg('✅ Removed from favorites');
+    } catch { setMsg('❌ Failed to remove favorite'); }
     setTimeout(() => setMsg(''), 3000);
   };
 
   const searchColleges = () => {
     getColleges({ search, cutoff: cutoffFilter })
-      .then(r => setColleges(r.data.colleges || []))
+      .then(r => setColleges(r.colleges || []))
       .catch(() => {});
   };
 
   const saveProfile = async () => {
     setSaving(true); setMsg('');
     try {
-      await updateStudentProfile(editForm);
+      await updateStudentProfile(user.id, editForm);
       setProfile(prev => ({ ...prev, ...editForm }));
       updateUser({ name: editForm.name });
       setEditMode(false);
       setMsg('✅ Profile updated successfully!');
     } catch (err) {
-      setMsg(`❌ ${err.response?.data?.message || 'Update failed'}`);
+      setMsg(`❌ ${err.message || 'Update failed'}`);
     } finally { setSaving(false); }
   };
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
-    const fd = new FormData(); fd.append('profile_photo', file);
     try {
-      const r = await uploadStudentPhoto(fd);
-      setProfile(prev => ({ ...prev, profile_photo_url: r.data.url }));
+      const url = await uploadStudentPhoto(user.id, file);
+      setProfile(prev => ({ ...prev, profile_photo: url }));
       setMsg('✅ Photo updated!');
     } catch { setMsg('❌ Photo upload failed'); }
   };
 
   const handleApply = async (college) => {
     try {
-      await applyToCollege({ college_id: college.id, type: 'admission' });
+      await applyToCollege(user.id, { college_id: college.user_id || college.id, type: 'admission' });
       setMsg(`✅ Applied to ${college.college_name}`);
     } catch (err) {
-      setMsg(`❌ ${err.response?.data?.message || 'Application failed'}`);
+      setMsg(`❌ ${err.message || 'Application failed'}`);
     }
+    setTimeout(() => setMsg(''), 3000);
   };
 
   if (loading) return (
@@ -191,8 +170,8 @@ const StudentDashboard = () => {
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden cursor-pointer"
               onClick={() => photoRef.current?.click()}>
-              {profile?.profile_photo_url
-                ? <img src={profile.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+              {profile?.profile_photo
+                ? <img src={profile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
                 : <span className="text-2xl font-bold text-white">{user?.name?.[0]?.toUpperCase()}</span>
               }
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-all">
@@ -203,7 +182,7 @@ const StudentDashboard = () => {
           </div>
           <div>
             <h1 className="font-heading text-2xl font-bold text-slate-800">{profile?.name || user?.name}</h1>
-            <p className="text-slate-500 text-sm">{profile?.email || user?.email}</p>
+            <p className="text-slate-500 text-sm">{user?.email}</p>
             {profile?.cutoff && (
               <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
                 Cutoff: {profile.cutoff}
@@ -236,7 +215,7 @@ const StudentDashboard = () => {
               <div className="space-y-4">
                 {editMode ? (
                   <>
-                    {[['Full Name','name','text'],['Email','email','email'],['Phone','phone','tel']].map(([label, field, type]) => (
+                    {[['Full Name','name','text'],['Phone','phone','tel']].map(([label, field, type]) => (
                       <div key={field}>
                         <label className="label">{label}</label>
                         <input type={type} value={editForm[field] || ''} onChange={e => setEditForm(p => ({ ...p, [field]: e.target.value }))} className="input" />
@@ -249,7 +228,7 @@ const StudentDashboard = () => {
                   </>
                 ) : (
                   <>
-                    {[['👤 Name', profile?.name], ['📧 Email', profile?.email], ['📞 Phone', profile?.phone || '—'], ['📝 Bio', profile?.bio || '—']].map(([label, val]) => (
+                    {[['👤 Name', profile?.name], ['📧 Email', user?.email], ['📞 Phone', profile?.phone || '—'], ['📝 Bio', profile?.bio || '—']].map(([label, val]) => (
                       <div key={label} className="flex items-start gap-3">
                         <span className="text-slate-500 text-sm w-28 flex-shrink-0">{label}</span>
                         <span className="text-slate-800 text-sm">{val}</span>
@@ -307,32 +286,19 @@ const StudentDashboard = () => {
         {/* ── Colleges Tab ──────────────────────────────── */}
         {tab === 'colleges' && (
           <div>
-            {/* Search / Filter */}
             <div className="flex gap-3 mb-6 flex-wrap">
-              <input 
-                value={search} 
-                onChange={e => setSearch(e.target.value)} 
-                onKeyDown={e => e.key === 'Enter' && searchColleges()}
-                placeholder="Search by college name..." 
-                className="input max-w-sm border border-slate-200" 
-              />
-              <input 
-                value={cutoffFilter} 
-                onChange={e => setCutoffFilter(e.target.value)} 
-                type="number" 
-                placeholder="Max cutoff filter" 
-                className="input max-w-[180px] border border-slate-200" 
-              />
+              <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchColleges()} placeholder="Search by college name..." className="input max-w-sm border border-slate-200" />
+              <input value={cutoffFilter} onChange={e => setCutoffFilter(e.target.value)} type="number" placeholder="Max cutoff filter" className="input max-w-[180px] border border-slate-200" />
               <button onClick={searchColleges} className="btn-primary px-5 shadow-sm">Search</button>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {colleges.map(college => (
                 <CollegeCard
-                  key={college.id}
+                  key={college.user_id || college.id}
                   college={college}
                   onApply={handleApply}
-                  isFavorited={!!favoritesMap[college.id]}
-                  onToggleFavorite={() => handleToggleFavorite(college.id)}
+                  isFavorited={!!favoritesMap[college.user_id || college.id]}
+                  onToggleFavorite={() => handleToggleFavorite(college.user_id || college.id)}
                 />
               ))}
               {colleges.length === 0 && (
@@ -455,28 +421,20 @@ const StudentDashboard = () => {
                       <div className="flex items-start gap-4 mb-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-slate-100 flex items-center justify-center text-xl flex-shrink-0">
                           {item.details?.logo ? (
-                            <img src={item.details.logo.startsWith('http') ? item.details.logo : `/uploads/logos/${item.details.logo}`} alt={item.details.collegeName} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>🏛️</span>
-                          )}
+                            <img src={item.details.logo} alt={item.details.college_name} className="w-full h-full object-cover" />
+                          ) : <span>🏛️</span>}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2">{item.details?.collegeName}</h3>
+                          <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2">{item.details?.college_name}</h3>
                           <p className="text-slate-400 text-xs mt-0.5">{item.details?.city}</p>
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
-                      <Link 
-                        to={`/colleges/${item.item_id}`} 
-                        className="flex-1 text-center py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-200/40 text-slate-800 transition-all"
-                      >
+                      <Link to={`/colleges/${item.item_id}`} className="flex-1 text-center py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-200/40 text-slate-800 transition-all">
                         View Details
                       </Link>
-                      <button 
-                        onClick={() => handleRemoveFavorite(item.id)} 
-                        className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-danger/10 text-danger hover:bg-danger/25 transition-all"
-                      >
+                      <button onClick={() => handleRemoveFavorite(item.id)} className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-danger/10 text-danger hover:bg-danger/25 transition-all">
                         Remove
                       </button>
                     </div>

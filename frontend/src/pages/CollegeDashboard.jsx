@@ -4,7 +4,7 @@ import {
   getCollegeProfile, updateCollegeProfile, uploadCollegeLogo,
   addCourse, deleteCourse, createPost, deletePost,
   createEvent, addPlacement, addScholarship,
-  getCollegeApplications, updateAppStatus
+  getCollegeApplications, updateAppStatus,
 } from '../api';
 
 const TabBtn = ({ active, onClick, children }) => (
@@ -24,98 +24,119 @@ const CollegeDashboard = () => {
   const [applications, setApplications] = useState([]);
   const [msg, setMsg] = useState('');
 
-  // Course form
   const [courseForm, setCourseForm] = useState({ course_name: '', cutoff: '', seats: '', duration: '4 Years', department: '', fee_per_year: '' });
-  // Post form
   const [postForm, setPostForm] = useState({ type: 'general', title: '', description: '' });
   const [postFile, setPostFile] = useState(null);
-  // Event form
   const [eventForm, setEventForm] = useState({ name: '', description: '', event_date: '', location: '', max_participants: '' });
-  // Placement form
   const [placForm, setPlacForm] = useState({ year: new Date().getFullYear(), highest_package: '', average_package: '', placement_percent: '', top_recruiters: '' });
-  // Scholarship form
   const [scholForm, setScholForm] = useState({ name: '', description: '', amount: '', eligibility: '' });
 
-  useEffect(() => {
-    getCollegeProfile()
-      .then(r => { setProfile(r.data.college); setEditForm(r.data.college); })
+  const loadProfile = () => {
+    if (!user?.id) return;
+    getCollegeProfile(user.id)
+      .then(p => { setProfile(p); setEditForm(p); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { loadProfile(); }, [user?.id]);
 
   useEffect(() => {
-    if (tab === 'applications') {
-      getCollegeApplications().then(r => setApplications(r.data.applications || [])).catch(() => {});
+    if (tab === 'applications' && user?.id) {
+      getCollegeApplications(user.id)
+        .then(apps => setApplications(apps))
+        .catch(() => {});
     }
-  }, [tab]);
+  }, [tab, user?.id]);
 
   const notify = (m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
 
   const saveProfile = async () => {
     setSaving(true);
-    try { await updateCollegeProfile(editForm); setProfile(p => ({ ...p, ...editForm })); setEditMode(false); notify('✅ Profile updated!'); }
-    catch (e) { notify(`❌ ${e.response?.data?.message || 'Failed'}`); }
+    try {
+      await updateCollegeProfile(user.id, editForm);
+      setProfile(p => ({ ...p, ...editForm }));
+      setEditMode(false);
+      notify('✅ Profile updated!');
+    } catch (e) { notify(`❌ ${e.message || 'Failed'}`); }
     finally { setSaving(false); }
   };
 
   const handleLogoChange = async (e) => {
     const f = e.target.files?.[0]; if (!f) return;
-    const fd = new FormData(); fd.append('logo', f);
-    try { const r = await uploadCollegeLogo(fd); setProfile(p => ({ ...p, logo: r.data.url })); notify('✅ Logo updated!'); }
-    catch { notify('❌ Logo upload failed'); }
+    try {
+      const url = await uploadCollegeLogo(user.id, f);
+      setProfile(p => ({ ...p, logo: url }));
+      notify('✅ Logo updated!');
+    } catch { notify('❌ Logo upload failed'); }
   };
 
   const handleAddCourse = async (e) => {
     e.preventDefault();
-    try { await addCourse(courseForm); notify('✅ Course added!'); setCourseForm({ course_name: '', cutoff: '', seats: '', duration: '4 Years', department: '', fee_per_year: '' }); getCollegeProfile().then(r => setProfile(r.data.college)); }
-    catch (e) { notify(`❌ ${e.response?.data?.message || 'Failed'}`); }
+    try {
+      await addCourse(user.id, { ...courseForm, cutoff: parseFloat(courseForm.cutoff), seats: parseInt(courseForm.seats) || null, fee_per_year: parseFloat(courseForm.fee_per_year) || null });
+      notify('✅ Course added!');
+      setCourseForm({ course_name: '', cutoff: '', seats: '', duration: '4 Years', department: '', fee_per_year: '' });
+      loadProfile();
+    } catch (e) { notify(`❌ ${e.message || 'Failed'}`); }
   };
 
   const handleDeleteCourse = async (id) => {
-    try { await deleteCourse(id); notify('✅ Course deleted'); setProfile(p => ({ ...p, courses: p.courses.filter(c => c.id !== id) })); }
-    catch { notify('❌ Delete failed'); }
+    try {
+      await deleteCourse(id);
+      notify('✅ Course deleted');
+      setProfile(p => ({ ...p, courses: p.courses.filter(c => c.id !== id) }));
+    } catch { notify('❌ Delete failed'); }
   };
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    const fd = new FormData();
-    Object.entries(postForm).forEach(([k, v]) => fd.append(k, v));
-    if (postFile) fd.append('media', postFile);
-    try { await createPost(fd); notify('✅ Post published!'); setPostForm({ type: 'general', title: '', description: '' }); setPostFile(null); getCollegeProfile().then(r => setProfile(r.data.college)); }
-    catch (e) { notify(`❌ ${e.response?.data?.message || 'Failed'}`); }
+    try {
+      await createPost(user.id, postForm, postFile || null);
+      notify('✅ Post published!');
+      setPostForm({ type: 'general', title: '', description: '' });
+      setPostFile(null);
+      loadProfile();
+    } catch (e) { notify(`❌ ${e.message || 'Failed'}`); }
   };
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
-    const fd = new FormData();
-    Object.entries(eventForm).forEach(([k, v]) => fd.append(k, v));
-    try { await createEvent(fd); notify('✅ Event created!'); setEventForm({ name: '', description: '', event_date: '', location: '', max_participants: '' }); getCollegeProfile().then(r => setProfile(r.data.college)); }
-    catch (e) { notify(`❌ ${e.response?.data?.message || 'Failed'}`); }
+    try {
+      await createEvent(user.id, eventForm);
+      notify('✅ Event created!');
+      setEventForm({ name: '', description: '', event_date: '', location: '', max_participants: '' });
+      loadProfile();
+    } catch (e) { notify(`❌ ${e.message || 'Failed'}`); }
   };
 
   const handleAddPlacement = async (e) => {
     e.preventDefault();
-    try { await addPlacement(placForm); notify('✅ Placement record added!'); getCollegeProfile().then(r => setProfile(r.data.college)); }
-    catch (e) { notify(`❌ ${e.response?.data?.message || 'Failed'}`); }
+    try {
+      await addPlacement(user.id, { ...placForm, year: parseInt(placForm.year) });
+      notify('✅ Placement record added!');
+      loadProfile();
+    } catch (e) { notify(`❌ ${e.message || 'Failed'}`); }
   };
 
   const handleAddScholarship = async (e) => {
     e.preventDefault();
-    try { await addScholarship(scholForm); notify('✅ Scholarship added!'); getCollegeProfile().then(r => setProfile(r.data.college)); }
-    catch (e) { notify(`❌ ${e.response?.data?.message || 'Failed'}`); }
+    try {
+      await addScholarship(user.id, { ...scholForm, amount: parseFloat(scholForm.amount) || null });
+      notify('✅ Scholarship added!');
+      loadProfile();
+    } catch (e) { notify(`❌ ${e.message || 'Failed'}`); }
   };
 
   const handleAppStatus = async (id, status) => {
-    try { await updateAppStatus(id, status); setApplications(prev => prev.map(a => a.id === id ? { ...a, status } : a)); notify(`✅ Application ${status}`); }
-    catch { notify('❌ Update failed'); }
+    try {
+      await updateAppStatus(id, status);
+      setApplications(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+      notify(`✅ Application ${status}`);
+    } catch { notify('❌ Update failed'); }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center pt-16"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-
-  const set = (setter) => (field) => (e) => setter(p => ({ ...p, [field]: e.target.value }));
-  const inp = (val, onChange, placeholder, type = 'text') => (
-    <input type={type} value={val} onChange={onChange} placeholder={placeholder} className="input" />
-  );
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4">
@@ -125,7 +146,7 @@ const CollegeDashboard = () => {
         <div className="flex items-center gap-5 mb-8">
           <label className="relative cursor-pointer">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden">
-              {profile?.logo ? <img src={profile.logo.startsWith('http') ? profile.logo : `/uploads/logos/${profile.logo}`} className="w-full h-full object-cover" alt="Logo" /> : <span className="text-2xl">🏛️</span>}
+              {profile?.logo ? <img src={profile.logo} className="w-full h-full object-cover" alt="Logo" /> : <span className="text-2xl">🏛️</span>}
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-all rounded-2xl"><span className="text-white text-xs">📷</span></div>
             </div>
             <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
@@ -164,7 +185,7 @@ const CollegeDashboard = () => {
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
-                {[['🏛️ College','college_name'],['📍 City','city'],['🗺️ State','state'],['📧 Email','email'],['📞 Phone','phone'],['🌐 Website','website'],['🏆 Accreditation','accreditation']].map(([label, field]) => (
+                {[['🏛️ College','college_name'],['📍 City','city'],['🗺️ State','state'],['📞 Phone','phone'],['🌐 Website','website'],['🏆 Accreditation','accreditation']].map(([label, field]) => (
                   <div key={field} className="flex gap-3">
                     <span className="text-slate-500 text-sm w-36 flex-shrink-0">{label}</span>
                     <span className="text-slate-800 text-sm break-all">{profile?.[field] || '—'}</span>
@@ -239,7 +260,7 @@ const CollegeDashboard = () => {
                       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 capitalize">{p.type}</span>
                       <h3 className="font-semibold text-slate-800 mt-2">{p.title}</h3>
                       {p.description && <p className="text-slate-400 text-sm mt-1 line-clamp-2">{p.description}</p>}
-                      {p.media_url && p.media_type === 'image' && <img src={p.media_url.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`} className="mt-2 rounded-lg h-28 object-cover w-full" alt={p.title} />}
+                      {p.media_url && p.media_type === 'image' && <img src={p.media_url} className="mt-2 rounded-lg h-28 object-cover w-full" alt={p.title} />}
                     </div>
                     <button onClick={() => deletePost(p.id).then(() => setProfile(pr => ({ ...pr, posts: pr.posts.filter(x => x.id !== p.id) })))} className="text-red-400 hover:text-red-300 ml-2">🗑️</button>
                   </div>
@@ -352,7 +373,7 @@ const CollegeDashboard = () => {
                   <div key={app.id} className="glass rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <h3 className="font-semibold text-slate-800">{app.student_name}</h3>
-                      <p className="text-slate-500 text-sm">{app.student_email} · {app.student_phone}</p>
+                      <p className="text-slate-500 text-sm">{app.student_phone}</p>
                       <div className="flex gap-4 mt-1.5 text-xs text-slate-500">
                         <span>📚 {app.course_name || 'General'}</span>
                         {app.hsc_marks && <span>HSC: {app.hsc_marks}%</span>}

@@ -10,7 +10,7 @@ const CompareColleges = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const ids = searchParams.get('ids')?.split(',').map(id => parseInt(id)) || [];
+  const ids = searchParams.get('ids')?.split(',') || [];
 
   useEffect(() => {
     if (ids.length === 0) {
@@ -25,8 +25,7 @@ const CompareColleges = () => {
     // Fetch details for all selected colleges
     Promise.all(ids.map(id => getCollegeById(id)))
       .then(responses => {
-        const data = responses.map(res => res.data.college);
-        setColleges(data);
+        setColleges(responses);
       })
       .catch(() => {
         setError('Failed to fetch details for one or more colleges.');

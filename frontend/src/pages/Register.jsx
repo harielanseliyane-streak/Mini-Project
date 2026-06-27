@@ -17,13 +17,17 @@ const Register = () => {
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
   useEffect(() => { if (params.get('role')) setRole(params.get('role')); }, [params]);
   useEffect(() => {
-    if (isAuthenticated) navigate(user?.role === 'student' ? '/student/dashboard' : '/college/dashboard', { replace: true });
+    if (isAuthenticated && user) {
+      if (user.role === 'admin')        navigate('/admin/dashboard',   { replace: true });
+      else if (user.role === 'college') navigate('/college/dashboard', { replace: true });
+      else                              navigate('/student/dashboard', { replace: true });
+    }
   }, [isAuthenticated, user, navigate]);
 
   const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -37,10 +41,10 @@ const Register = () => {
     if (role === 'college' && !form.college_name) { setError('College name is required'); return; }
     setLoading(true);
     try {
-      const { data } = await apiRegister({ ...form, role });
-      login(data.user, data.token);
+      await apiRegister({ ...form, role });
+      // AuthContext will auto-detect the new session via onAuthStateChange
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.message || 'Registration failed');
     } finally { setLoading(false); }
   };
 

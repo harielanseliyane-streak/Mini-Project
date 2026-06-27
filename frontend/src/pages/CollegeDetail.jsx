@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCollegeById, applyToCollege, sendChatMessage } from '../api';
+import { getCollegeById, applyToCollege } from '../api';
 import { useAuth } from '../context/AuthContext';
 import MediaViewer from '../components/MediaViewer';
 
@@ -8,15 +8,15 @@ const CollegeDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [college, setCollege]   = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [tab,     setTab]       = useState('courses');
-  const [viewer,  setViewer]    = useState(null);
-  const [msg,     setMsg]       = useState('');
+  const [college, setCollege] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tab,     setTab]     = useState('courses');
+  const [viewer,  setViewer]  = useState(null);
+  const [msg,     setMsg]     = useState('');
 
   useEffect(() => {
     getCollegeById(id)
-      .then(r => setCollege(r.data.college))
+      .then(c => setCollege(c))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
@@ -24,9 +24,9 @@ const CollegeDetail = () => {
   const handleApply = async (course_id) => {
     if (!user) { navigate('/login'); return; }
     try {
-      await applyToCollege({ college_id: parseInt(id), course_id, type: 'admission' });
+      await applyToCollege(user.id, { college_id: id, course_id, type: 'admission' });
       setMsg('✅ Application submitted!');
-    } catch (e) { setMsg(`❌ ${e.response?.data?.message || 'Failed'}`); }
+    } catch (e) { setMsg(`❌ ${e.message || 'Failed'}`); }
     setTimeout(() => setMsg(''), 3000);
   };
 
@@ -34,7 +34,7 @@ const CollegeDetail = () => {
   if (!college) return <div className="min-h-screen flex items-center justify-center pt-16 text-slate-400">College not found.</div>;
 
   const mediaPosts = college.posts?.filter(p => p.media_url) || [];
-  const mediaItems = mediaPosts.map(p => ({ url: p.media_url?.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`, type: p.media_type, title: p.title }));
+  const mediaItems = mediaPosts.map(p => ({ url: p.media_url, type: p.media_type, title: p.title }));
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4">
@@ -44,7 +44,7 @@ const CollegeDetail = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10" />
           <div className="relative flex flex-wrap items-start gap-6">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-slate-200/80 flex items-center justify-center text-4xl">
-              {college.logo ? <img src={college.logo.startsWith('http') ? college.logo : `/uploads/logos/${college.logo}`} className="w-full h-full object-cover rounded-2xl" alt="logo" /> : '🏛️'}
+              {college.logo ? <img src={college.logo} className="w-full h-full object-cover rounded-2xl" alt="logo" /> : '🏛️'}
             </div>
             <div className="flex-1">
               <div className="flex flex-wrap gap-2 mb-2">
@@ -54,8 +54,7 @@ const CollegeDetail = () => {
               <p className="text-slate-500 mt-1">📍 {college.address}, {college.city}, {college.state}</p>
               <div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-500">
                 {college.website && <a href={college.website} target="_blank" rel="noreferrer" className="text-primary hover:text-secondary">🌐 Website</a>}
-                {college.email && <span>📧 {college.email}</span>}
-                {college.phone && <span>📞 {college.phone}</span>}
+                {college.profiles?.phone && <span>📞 {college.profiles.phone}</span>}
               </div>
             </div>
           </div>
@@ -140,7 +139,16 @@ const CollegeDetail = () => {
                   {ev.location && <span>📍 {ev.location}</span>}
                 </div>
                 {ev.description && <p className="text-slate-500 text-sm mt-2">{ev.description}</p>}
-                {user?.role === 'student' && <button onClick={() => applyToCollege({ college_id: parseInt(id), event_id: ev.id, type: 'event' }).then(() => setMsg('✅ Registered!')).catch(e => setMsg(`❌ ${e.response?.data?.message}`))} className="btn-primary text-xs px-4 py-1.5 mt-3">Register</button>}
+                {user?.role === 'student' && (
+                  <button
+                    onClick={() => applyToCollege(user.id, { college_id: id, event_id: ev.id, type: 'event' })
+                      .then(() => setMsg('✅ Registered!'))
+                      .catch(e => setMsg(`❌ ${e.message}`))}
+                    className="btn-primary text-xs px-4 py-1.5 mt-3"
+                  >
+                    Register
+                  </button>
+                )}
               </div>
             ))}
             {!college.events?.length && <p className="text-slate-500 col-span-2 text-center py-10">No upcoming events</p>}
@@ -159,7 +167,7 @@ const CollegeDetail = () => {
                 <h3 className="font-semibold text-slate-800">{p.title}</h3>
                 {p.description && <p className="text-slate-500 text-sm mt-1">{p.description}</p>}
                 {p.media_url && p.media_type === 'image' && (
-                  <img src={p.media_url?.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`} className="mt-3 rounded-xl h-40 object-cover w-full cursor-pointer" onClick={() => setViewer({ items: [{ url: p.media_url?.startsWith('http') ? p.media_url : `/uploads/media/${p.media_url}`, type: 'image', title: p.title }], index: 0 })} alt={p.title} />
+                  <img src={p.media_url} className="mt-3 rounded-xl h-40 object-cover w-full cursor-pointer" onClick={() => setViewer({ items: [{ url: p.media_url, type: 'image', title: p.title }], index: 0 })} alt={p.title} />
                 )}
               </div>
             ))}

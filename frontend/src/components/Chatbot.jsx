@@ -45,10 +45,10 @@ const Chatbot = () => {
     setLoading(true);
     
     try {
-      const { data } = await sendChatMessage(msg);
-      setMessages(prev => [...prev, { role: 'bot', text: data.reply }]);
+      const { reply } = await sendChatMessage(msg);
+      setMessages(prev => [...prev, { role: 'bot', text: reply }]);
     } catch {
-      setMessages(prev => [...prev, { role: 'bot', text: "I'm having trouble matching your profile details right now. Please try again in a moment." }]);
+      setMessages(prev => [...prev, { role: 'bot', text: "I'm having trouble right now. Please try again in a moment." }]);
     } finally {
       setLoading(false);
     }
