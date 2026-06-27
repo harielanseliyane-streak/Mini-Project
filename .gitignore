@@ -1,0 +1,36 @@
+# ── Node.js Dependency Directories ─────────────────────────────
+node_modules/
+frontend/node_modules/
+
+# ── Production Build Outputs ──────────────────────────────────
+dist/
+frontend/dist/
+frontend/dev-dist/
+
+# ── Environment & Secrets ──────────────────────────────────────
+.env
+.env.local
+.env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# ── Debug Logs ────────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Editor & IDE Configs ───────────────────────────────────────
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── OS Files ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
