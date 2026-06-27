@@ -213,8 +213,8 @@ const Home = () => {
         </div>
 
 
-        <div className="relative z-10 text-left px-6 sm:px-12 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
-          <div className="max-w-2xl">
+        <div className="relative z-10 text-left px-6 sm:px-12 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-end pb-10">
+          <div className="max-w-2xl pb-16">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-8 animate-fade-in">
               <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
@@ -265,6 +265,28 @@ const Home = () => {
                 Go to Dashboard →
               </Link>
             )}
+          </div>
+
+          {/* ── College Illustration (right side) ── */}
+          <div className="hidden lg:block relative self-end">
+            {/* Soft radial glow behind the image */}
+            <div
+              className="absolute inset-0 pointer-events-none z-0"
+              style={{
+                background: 'radial-gradient(ellipse 80% 70% at 60% 70%, rgba(0,179,165,0.10) 0%, transparent 70%)',
+              }}
+            />
+            <img
+              src="/college-bg-teal.png"
+              alt="College building illustration"
+              className="relative z-10 w-full max-w-[680px] ml-auto object-contain select-none pointer-events-none"
+              style={{
+                filter: 'drop-shadow(0 32px 64px rgba(0,154,142,0.13))',
+                animation: 'float 8s ease-in-out infinite',
+                animationDelay: '0.5s',
+              }}
+              draggable={false}
+            />
           </div>
         </div>
       </section>
