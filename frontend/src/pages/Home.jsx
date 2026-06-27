@@ -196,28 +196,12 @@ const Home = () => {
       <section 
         className="relative min-h-screen flex items-center overflow-hidden pt-16 bg-white"
       >
-        {/* ── College Building Background Illustration ── */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 pointer-events-none z-0"
-          style={{
-            backgroundImage: `url(${collegeBgTeal})`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'contain',
-            backgroundPosition: 'right bottom',
-            opacity: 0.85,
-            /* fade the left edge so it blends into the white text area */
-            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, transparent 35%, rgba(255,255,255,0.3) 50%, white 70%)',
-            maskImage: 'linear-gradient(to right, transparent 0%, transparent 35%, rgba(255,255,255,0.3) 50%, white 70%)',
-          }}
-        />
-
         {/* ── Subtle teal glow layer ── */}
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-0"
           style={{
-            background: 'radial-gradient(ellipse 55% 70% at 85% 75%, rgba(0,179,165,0.07) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse 60% 70% at 80% 60%, rgba(0,179,165,0.06) 0%, transparent 70%)',
           }}
         />
 
@@ -238,8 +222,10 @@ const Home = () => {
           ))}
         </div>
 
-        {/* ── Hero Content ── */}
-        <div className="relative z-10 text-left px-6 sm:px-12 max-w-7xl mx-auto w-full pb-16">
+        {/* ── Hero Content (2-column grid) ── */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 grid lg:grid-cols-2 gap-8 items-center py-16">
+
+          {/* Left column – text & CTAs */}
           <div className="max-w-2xl">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-8 animate-fade-in">
@@ -292,6 +278,30 @@ const Home = () => {
               </Link>
             )}
           </div>
+
+          {/* Right column – College illustration */}
+          <div className="hidden lg:flex items-center justify-center relative animate-fade-in">
+            {/* Glow circle behind image */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: 'radial-gradient(ellipse 85% 85% at 50% 50%, rgba(0,179,165,0.10) 0%, transparent 75%)',
+              }}
+            />
+            <img
+              src={collegeBgTeal}
+              alt="College building illustration"
+              className="relative w-full object-contain select-none pointer-events-none"
+              style={{
+                maxHeight: '600px',
+                animation: 'float 7s ease-in-out infinite',
+                animationDelay: '0.3s',
+                filter: 'drop-shadow(0 16px 48px rgba(0,154,142,0.18))',
+              }}
+              draggable={false}
+            />
+          </div>
+
         </div>
       </section>
 
