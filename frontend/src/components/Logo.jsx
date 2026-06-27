@@ -12,10 +12,10 @@ const Logo = ({ className = "h-9", showText = true }) => {
         {/* Cap Diamond */}
         <path d="M100 48L142 68L100 88L58 68Z" fill="url(#cap-grad)" />
         {/* Cap skullcap */}
-        <path d="M82 78V85C82 96 118 96 118 85V78" fill="#C59B27" />
+        <path d="M82 78V85C82 96 118 96 118 85V78" fill="#10B981" />
         {/* Cap Tassel */}
-        <path d="M100 68L132 80C134 85 134 92 134 100" stroke="#C59B27" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-        <circle cx="134" cy="102" r="4.5" fill="#C59B27" />
+        <path d="M100 68L132 80C134 85 134 92 134 100" stroke="#059669" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+        <circle cx="134" cy="102" r="4.5" fill="#059669" />
 
         {/* Stylized torso / lapels */}
         {/* Left Lapel */}
@@ -26,12 +26,12 @@ const Logo = ({ className = "h-9", showText = true }) => {
         {/* Gradients */}
         <defs>
           <linearGradient id="logo-grad" x1="15" y1="15" x2="185" y2="185" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#1B365D" />
-            <stop offset="100%" stopColor="#C59B27" />
+            <stop offset="0%" stopColor="#059669" />
+            <stop offset="100%" stopColor="#10B981" />
           </linearGradient>
           <linearGradient id="cap-grad" x1="58" y1="48" x2="142" y2="98" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#2C3E50" />
-            <stop offset="100%" stopColor="#C59B27" />
+            <stop offset="0%" stopColor="#047857" />
+            <stop offset="100%" stopColor="#10B981" />
           </linearGradient>
         </defs>
       </svg>
@@ -39,10 +39,10 @@ const Logo = ({ className = "h-9", showText = true }) => {
       {showText && (
         <div className="flex flex-col justify-center leading-none">
           <div className="font-heading font-extrabold text-xl tracking-tight text-slate-800">
-            <span className="text-[#1B365D]">Info</span>
-            <span className="text-[#C59B27] font-semibold">-Hub</span>
+            <span className="text-[#059669]">Info</span>
+            <span className="text-[#10B981] font-semibold">-Hub</span>
           </div>
-          <span className="text-[7px] uppercase font-bold tracking-[0.22em] text-[#C59B27] mt-1.5">
+          <span className="text-[7px] uppercase font-bold tracking-[0.22em] text-[#059669] mt-1.5">
             Explore • Learn • Succeed
           </span>
         </div>

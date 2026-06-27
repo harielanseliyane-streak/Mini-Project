@@ -194,12 +194,6 @@ const Home = () => {
       {/* ── Hero Section ──────────────────────────────────── */}
       <section 
         className="relative min-h-screen flex items-center overflow-hidden pt-16 bg-white"
-        style={{
-          backgroundImage: 'linear-gradient(to right, #ffffff 0%, #ffffff 35%, rgba(255,255,255,0.85) 60%, rgba(255,255,255,0.2) 100%), url(/sketch-bg.png), url(/college-bg-teal.png)',
-          backgroundSize: 'contain',
-          backgroundPosition: 'right center',
-          backgroundRepeat: 'no-repeat'
-        }}
       >
         {/* ── Flying Birds Layer ── */}
         <BirdCanvas />

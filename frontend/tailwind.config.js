@@ -17,20 +17,20 @@ export default {
         cardLight: '#FFFFFF',
         borderLight: 'rgba(0,0,0,0.06)',
         
-        // Brand & Palette (Architectural Sketch Palette: Classic Navy & Autumn Gold)
+        // Brand & Palette (Clean White & Green Palette)
         primary: {
-          DEFAULT: '#1B365D', // Classic Academic Navy Blue
-          hover: '#132744',
+          DEFAULT: '#059669', // Deep Emerald Green
+          hover: '#047857',
         },
         secondary: {
-          DEFAULT: '#C59B27', // Warm Golden Amber / Autumn Gold
-          hover: '#A6801C',
+          DEFAULT: '#10B981', // Vibrant Emerald Green
+          hover: '#059669',
         },
         purple: {
-          DEFAULT: '#D97706', // Rich Honey Ochre
-          hover: '#B45309',
+          DEFAULT: '#047857', // Forest Green Accent
+          hover: '#065F46',
         },
-        accent: '#C59B27',
+        accent: '#10B981',
         success: '#10B981',
         warning: '#F59E0B',
         danger: '#EF4444',
