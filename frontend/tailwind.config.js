@@ -17,21 +17,21 @@ export default {
         cardLight: '#FFFFFF',
         borderLight: 'rgba(0,0,0,0.06)',
         
-        // Brand & Palette (Teal-Green Palette from User Image)
+        // Brand & Palette (Exact User Color #009A8E)
         primary: {
-          DEFAULT: '#006672', // Deep Teal-Green
-          hover: '#00525C',
+          DEFAULT: '#009A8E', // User exact Teal-Emerald
+          hover: '#007A70',
         },
         secondary: {
-          DEFAULT: '#00a896', // Vibrant Teal-Green
-          hover: '#008a7b',
+          DEFAULT: '#00BFA9', // Lighter Teal-Emerald Accent
+          hover: '#009A8E',
         },
         purple: {
-          DEFAULT: '#028090', // Ocean Teal Accent
-          hover: '#016673',
+          DEFAULT: '#008479', // Deep Teal Accent
+          hover: '#006E64',
         },
-        accent: '#00a896',
-        success: '#00a896',
+        accent: '#009A8E',
+        success: '#009A8E',
         warning: '#F59E0B',
         danger: '#EF4444',
         
