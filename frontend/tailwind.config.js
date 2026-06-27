@@ -19,19 +19,19 @@ export default {
         
         // Brand & Palette (Dark Turquoise Theme)
         primary: {
-          DEFAULT: '#008B8B', // Deep Dark Turquoise (for contrast & readability)
-          hover: '#006B6B',
+          DEFAULT: '#009A8E', // Base theme color
+          hover: '#007D74',
         },
         secondary: {
-          DEFAULT: '#00CED1', // Vibrant Dark Turquoise
-          hover: '#00A8AB',
+          DEFAULT: '#00B3A5', // Premium teal gradient stop
+          hover: '#009A8E',
         },
         purple: {
-          DEFAULT: '#00979C',
-          hover: '#007A7D',
+          DEFAULT: '#00A597',
+          hover: '#008277',
         },
-        accent: '#00CED1',
-        success: '#00CED1',
+        accent: '#00B3A5',
+        success: '#00B3A5',
         warning: '#F59E0B',
         danger: '#EF4444',
         
