@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { getAdminStats, getAdminStudents, getAdminColleges, broadcastNotification, deleteReviewByAdmin, addCollegeByAdmin } from '../api';
-import { Users, GraduationCap, School, ShieldAlert, FileText, Send, Trash2, Calendar, Award, PlusCircle } from 'lucide-react';
+import { getAdminStats, getAdminStudents, getAdminColleges, broadcastNotification, addCollegeByAdmin } from '../api';
+import { Users, GraduationCap, School, ShieldAlert, FileText, Send, Calendar, Award, PlusCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TabBtn = ({ active, onClick, children }) => (
-  <button 
+  <button
     onClick={onClick}
     className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
       active ? 'bg-primary/20 text-primary border border-primary/30 shadow-sm'
@@ -22,36 +22,25 @@ const AdminDashboard = () => {
   const [colleges, setColleges] = useState([]);
   const [broadcastForm, setBroadcastForm] = useState({ title: '', message: '' });
   const [collegeForm, setCollegeForm] = useState({
-    college_name: '',
-    email: '',
-    password: '',
-    phone: '',
-    established: '',
-    accreditation: '',
-    city: '',
-    state: '',
-    website: '',
-    address: '',
-    description: ''
+    college_name: '', email: '', password: '', phone: '',
+    established: '', accreditation: '', city: '', state: '',
+    website: '', address: '', description: '',
   });
   const [msg, setMsg] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
 
   useEffect(() => {
-    // Load initial stats
     getAdminStats()
-      .then(res => {
-        setStats(res.data.stats);
-      })
+      .then(s => setStats(s))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     if (tab === 'users') {
-      getAdminStudents().then(res => setStudents(res.data.students)).catch(() => {});
-      getAdminColleges().then(res => setColleges(res.data.colleges)).catch(() => {});
+      getAdminStudents().then(s => setStudents(s)).catch(() => {});
+      getAdminColleges().then(c => setColleges(c)).catch(() => {});
     }
   }, [tab]);
 
@@ -60,7 +49,6 @@ const AdminDashboard = () => {
     if (!broadcastForm.title || !broadcastForm.message) return;
     setBtnLoading(true);
     setMsg({ text: '', type: '' });
-
     try {
       await broadcastNotification(broadcastForm);
       setMsg({ text: '✅ Announcement broadcasted successfully to all users!', type: 'success' });
@@ -80,24 +68,11 @@ const AdminDashboard = () => {
     try {
       await addCollegeByAdmin(collegeForm);
       setMsg({ text: `✅ College "${collegeForm.college_name}" added successfully!`, type: 'success' });
-      setCollegeForm({
-        college_name: '',
-        email: '',
-        password: '',
-        phone: '',
-        established: '',
-        accreditation: '',
-        city: '',
-        state: '',
-        website: '',
-        address: '',
-        description: ''
-      });
-      // Refresh stats and colleges list
-      getAdminStats().then(res => setStats(res.data.stats)).catch(() => {});
-      getAdminColleges().then(res => setColleges(res.data.colleges)).catch(() => {});
+      setCollegeForm({ college_name: '', email: '', password: '', phone: '', established: '', accreditation: '', city: '', state: '', website: '', address: '', description: '' });
+      getAdminStats().then(s => setStats(s)).catch(() => {});
+      getAdminColleges().then(c => setColleges(c)).catch(() => {});
     } catch (err) {
-      setMsg({ text: `❌ Failed to create college: ${err.response?.data?.message || err.message}`, type: 'danger' });
+      setMsg({ text: `❌ Failed to create college: ${err.message}`, type: 'danger' });
     } finally {
       setBtnLoading(false);
     }
@@ -151,9 +126,9 @@ const AdminDashboard = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-8 border-b border-slate-200 pb-4 overflow-x-auto">
-        <TabBtn active={tab === 'users'} onClick={() => setTab('users')}>👤 Users Directories</TabBtn>
+        <TabBtn active={tab === 'users'}       onClick={() => setTab('users')}>👤 Users Directories</TabBtn>
         <TabBtn active={tab === 'add-college'} onClick={() => setTab('add-college')}>🏛️ Add College</TabBtn>
-        <TabBtn active={tab === 'broadcast'} onClick={() => setTab('broadcast')}>📢 Broadcast Alert</TabBtn>
+        <TabBtn active={tab === 'broadcast'}   onClick={() => setTab('broadcast')}>📢 Broadcast Alert</TabBtn>
       </div>
 
       {msg.text && (
@@ -168,7 +143,7 @@ const AdminDashboard = () => {
       <div className="space-y-8">
         {tab === 'users' && (
           <div className="grid lg:grid-cols-2 gap-8">
-            {/* Students List */}
+            {/* Students */}
             <div className="card-premium p-6 border border-slate-200">
               <h2 className="font-heading text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <GraduationCap className="w-5 h-5 text-primary" /> Active Students ({students.length})
@@ -178,7 +153,7 @@ const AdminDashboard = () => {
                   <div key={s.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h4 className="font-bold text-slate-800 text-sm">{s.name}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">{s.email} | {s.phone || 'No phone'}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">{s.phone || 'No phone'}</p>
                     </div>
                     {s.cutoff && (
                       <span className="text-xs font-mono font-bold bg-primary/10 border border-primary/20 text-primary px-2.5 py-1 rounded-lg">
@@ -187,13 +162,11 @@ const AdminDashboard = () => {
                     )}
                   </div>
                 ))}
-                {students.length === 0 && (
-                  <p className="text-xs text-slate-400 text-center py-8">No registered students yet.</p>
-                )}
+                {students.length === 0 && <p className="text-xs text-slate-400 text-center py-8">No registered students yet.</p>}
               </div>
             </div>
 
-            {/* Colleges List */}
+            {/* Colleges */}
             <div className="card-premium p-6 border border-slate-200">
               <h2 className="font-heading text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <School className="w-5 h-5 text-secondary" /> Registered Colleges ({colleges.length})
@@ -203,7 +176,7 @@ const AdminDashboard = () => {
                   <div key={c.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h4 className="font-bold text-slate-800 text-sm">{c.college_name}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">{c.email} | {c.city || 'No Location'}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 font-semibold">{c.city || 'No Location'}</p>
                     </div>
                     {c.accreditation && (
                       <span className="text-xs font-mono font-bold bg-secondary/10 border border-secondary/20 text-secondary px-2.5 py-1 rounded-lg">
@@ -212,9 +185,7 @@ const AdminDashboard = () => {
                     )}
                   </div>
                 ))}
-                {colleges.length === 0 && (
-                  <p className="text-xs text-slate-400 text-center py-8">No registered colleges yet.</p>
-                )}
+                {colleges.length === 0 && <p className="text-xs text-slate-400 text-center py-8">No registered colleges yet.</p>}
               </div>
             </div>
           </div>
@@ -227,127 +198,42 @@ const AdminDashboard = () => {
               <PlusCircle className="w-5 h-5 text-primary" /> Create College Profile
             </h2>
             <form onSubmit={handleCreateCollege} className="space-y-6">
-              {/* Form Grid */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="label-premium">College Name *</label>
-                  <input 
-                    type="text" 
-                    value={collegeForm.college_name} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, college_name: e.target.value }))}
-                    placeholder="e.g. Anna University" 
-                    className="input-premium border border-slate-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="label-premium">Admin Email Address *</label>
-                  <input 
-                    type="email" 
-                    value={collegeForm.email} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="admin@college.edu" 
-                    className="input-premium border border-slate-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="label-premium">Account Password *</label>
-                  <input 
-                    type="password" 
-                    value={collegeForm.password} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="Minimum 6 characters" 
-                    className="input-premium border border-slate-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="label-premium">Contact Phone Number</label>
-                  <input 
-                    type="text" 
-                    value={collegeForm.phone} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="e.g. +91 44-2235-7004" 
-                    className="input-premium border border-slate-200"
-                  />
-                </div>
-                <div>
-                  <label className="label-premium">Established Year</label>
-                  <input 
-                    type="number" 
-                    value={collegeForm.established} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, established: e.target.value }))}
-                    placeholder="e.g. 1978" 
-                    className="input-premium border border-slate-200"
-                  />
-                </div>
-                <div>
-                  <label className="label-premium">Accreditation Rating</label>
-                  <input 
-                    type="text" 
-                    value={collegeForm.accreditation} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, accreditation: e.target.value }))}
-                    placeholder="e.g. NAAC A++" 
-                    className="input-premium border border-slate-200"
-                  />
-                </div>
-                <div>
-                  <label className="label-premium">City</label>
-                  <input 
-                    type="text" 
-                    value={collegeForm.city} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, city: e.target.value }))}
-                    placeholder="e.g. Chennai" 
-                    className="input-premium border border-slate-200"
-                  />
-                </div>
-                <div>
-                  <label className="label-premium">State</label>
-                  <input 
-                    type="text" 
-                    value={collegeForm.state} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, state: e.target.value }))}
-                    placeholder="e.g. Tamil Nadu" 
-                    className="input-premium border border-slate-200"
-                  />
-                </div>
+                {[
+                  ['College Name *', 'college_name', 'text', true],
+                  ['Admin Email Address *', 'email', 'email', true],
+                  ['Account Password *', 'password', 'password', true],
+                  ['Contact Phone Number', 'phone', 'text', false],
+                  ['Established Year', 'established', 'number', false],
+                  ['Accreditation Rating', 'accreditation', 'text', false],
+                  ['City', 'city', 'text', false],
+                  ['State', 'state', 'text', false],
+                ].map(([label, field, type, req]) => (
+                  <div key={field}>
+                    <label className="label-premium">{label}</label>
+                    <input
+                      type={type}
+                      required={req}
+                      value={collegeForm[field]}
+                      onChange={e => setCollegeForm(prev => ({ ...prev, [field]: e.target.value }))}
+                      className="input-premium border border-slate-200"
+                    />
+                  </div>
+                ))}
                 <div className="md:col-span-2">
                   <label className="label-premium">Official Website Link</label>
-                  <input 
-                    type="url" 
-                    value={collegeForm.website} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, website: e.target.value }))}
-                    placeholder="https://www.college.edu" 
-                    className="input-premium border border-slate-200"
-                  />
+                  <input type="url" value={collegeForm.website} onChange={e => setCollegeForm(prev => ({ ...prev, website: e.target.value }))} className="input-premium border border-slate-200" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="label-premium">Detailed Campus Address</label>
-                  <textarea 
-                    value={collegeForm.address} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="Sardar Patel Road, Guindy, Chennai - 600025..." 
-                    rows={2}
-                    className="input-premium resize-none border border-slate-200"
-                  />
+                  <textarea value={collegeForm.address} onChange={e => setCollegeForm(prev => ({ ...prev, address: e.target.value }))} rows={2} className="input-premium resize-none border border-slate-200" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="label-premium">College Description & Details</label>
-                  <textarea 
-                    value={collegeForm.description} 
-                    onChange={e => setCollegeForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Introduce your institution, key features, and offerings..." 
-                    rows={4}
-                    className="input-premium resize-none border border-slate-200"
-                  />
+                  <textarea value={collegeForm.description} onChange={e => setCollegeForm(prev => ({ ...prev, description: e.target.value }))} rows={4} className="input-premium resize-none border border-slate-200" />
                 </div>
               </div>
-              <button 
-                type="submit" 
-                disabled={btnLoading} 
-                className="btn-primary w-full flex items-center justify-center gap-2 shadow-md mt-4"
-              >
+              <button type="submit" disabled={btnLoading} className="btn-primary w-full flex items-center justify-center gap-2 shadow-md mt-4">
                 {btnLoading ? 'Creating Profile...' : 'Create College Profile'}
               </button>
             </form>
@@ -362,31 +248,13 @@ const AdminDashboard = () => {
             <form onSubmit={handleBroadcast} className="space-y-6">
               <div>
                 <label className="label-premium">Announcement Title</label>
-                <input 
-                  type="text" 
-                  value={broadcastForm.title} 
-                  onChange={e => setBroadcastForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g. Scholarship Application Deadline Extension" 
-                  className="input-premium border border-slate-200"
-                  required
-                />
+                <input type="text" value={broadcastForm.title} onChange={e => setBroadcastForm(prev => ({ ...prev, title: e.target.value }))} className="input-premium border border-slate-200" required />
               </div>
               <div>
                 <label className="label-premium">Notification Message</label>
-                <textarea 
-                  value={broadcastForm.message} 
-                  onChange={e => setBroadcastForm(prev => ({ ...prev, message: e.target.value }))}
-                  placeholder="Write the detailed bulletin announcement here..." 
-                  rows={4}
-                  className="input-premium resize-none border border-slate-200"
-                  required
-                />
+                <textarea value={broadcastForm.message} onChange={e => setBroadcastForm(prev => ({ ...prev, message: e.target.value }))} rows={4} className="input-premium resize-none border border-slate-200" required />
               </div>
-              <button 
-                type="submit" 
-                disabled={btnLoading} 
-                className="btn-primary w-full flex items-center justify-center gap-2 shadow-md"
-              >
+              <button type="submit" disabled={btnLoading} className="btn-primary w-full flex items-center justify-center gap-2 shadow-md">
                 {btnLoading ? 'Broadcasting...' : 'Broadcast Alert'}
               </button>
             </form>

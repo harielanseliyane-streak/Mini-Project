@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveQuizResult } from '../api';
+import { useAuth } from '../context/AuthContext';
 import { Brain, Star, ArrowRight, Award, Compass, Heart, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
 
 const QUESTIONS = [
   {
@@ -106,11 +108,13 @@ const QUESTIONS = [
 
 const Quiz = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+
 
   const handleChoiceSelect = (choiceOption) => {
     const newAnswers = { ...answers, [currentStep]: choiceOption.score };
@@ -142,78 +146,62 @@ const Quiz = () => {
     setLoading(true);
     setError('');
 
-    // Compute cumulative scores
     const scores = { technical: 0, analytical: 0, creative: 0, business: 0, communication: 0 };
     Object.values(finalAnswers).forEach(ans => {
-      Object.keys(ans).forEach(key => {
-        scores[key] = (scores[key] || 0) + ans[key];
-      });
+      Object.keys(ans).forEach(key => { scores[key] = (scores[key] || 0) + ans[key]; });
     });
 
-    // Determine Career Path & Personality based on top scores
     let career_path = 'Software Engineer';
     let personality = 'Analytical Architect';
     let maxScoreKey = 'technical';
     let maxScore = 0;
 
     Object.keys(scores).forEach(key => {
-      if (scores[key] > maxScore) {
-        maxScore = scores[key];
-        maxScoreKey = key;
-      }
+      if (scores[key] > maxScore) { maxScore = scores[key]; maxScoreKey = key; }
     });
 
-    if (maxScoreKey === 'technical') {
-      career_path = 'Artificial Intelligence & Software Engineer';
-      personality = 'Innovative Solution Builder';
-    } else if (maxScoreKey === 'analytical') {
-      career_path = 'Data Scientist & Computational Researcher';
-      personality = 'Methodical Analyst';
-    } else if (maxScoreKey === 'creative') {
-      career_path = 'UI/UX Designer & Product Specialist';
-      personality = 'Visual Catalyst';
-    } else if (maxScoreKey === 'business') {
-      career_path = 'Product Manager & Entrepreneur';
-      personality = 'Strategic Planner';
-    } else if (maxScoreKey === 'communication') {
-      career_path = 'Technical Consultant & Solutions Manager';
-      personality = 'Collaborative Communicator';
-    }
+    if (maxScoreKey === 'technical') { career_path = 'Artificial Intelligence & Software Engineer'; personality = 'Innovative Solution Builder'; }
+    else if (maxScoreKey === 'analytical') { career_path = 'Data Scientist & Computational Researcher'; personality = 'Methodical Analyst'; }
+    else if (maxScoreKey === 'creative') { career_path = 'UI/UX Designer & Product Specialist'; personality = 'Visual Catalyst'; }
+    else if (maxScoreKey === 'business') { career_path = 'Product Manager & Entrepreneur'; personality = 'Strategic Planner'; }
+    else if (maxScoreKey === 'communication') { career_path = 'Technical Consultant & Solutions Manager'; personality = 'Collaborative Communicator'; }
 
-    // Compute mock aptitude score based on analytical & technical responses (max technical 50, analytical 50)
     const rawAptitude = (scores.technical + scores.analytical) * 1.5;
     const aptitude_score = Math.min(Math.max(Math.round(rawAptitude), 40), 100);
+
+    const recommendations = `Based on your quiz profile, you excel at ${career_path.toLowerCase()} roles. Your aptitude score of ${aptitude_score}/100 puts you in a strong position for technical degrees. Recommended courses: CSE, AI & Data Science, IT. Top colleges on InfoHub offer scholarships for students with your profile!`;
 
     const payload = {
       career_path,
       personality,
       aptitude_score,
-      interest_mapping: {
+      interest_mapping: JSON.stringify({
         Technical: Math.min(scores.technical * 3, 100),
         Analytical: Math.min(scores.analytical * 3, 100),
         Creative: Math.min(scores.creative * 3, 100),
         Business: Math.min(scores.business * 3, 100),
-      },
-      skills_analysis: {
-        "Problem Solving": Math.min(aptitude_score, 100),
-        "Programming Logic": Math.min(scores.technical * 3, 100),
-        "Product Design": Math.min(scores.creative * 3.5, 100),
-        "Strategic Vision": Math.min(scores.business * 3.5, 100),
-      }
+      }),
+      skills_analysis: JSON.stringify({
+        'Problem Solving': Math.min(aptitude_score, 100),
+        'Programming Logic': Math.min(scores.technical * 3, 100),
+        'Product Design': Math.min(scores.creative * 3.5, 100),
+        'Strategic Vision': Math.min(scores.business * 3.5, 100),
+      }),
+      recommendations,
     };
 
     try {
-      const { data } = await saveQuizResult(payload);
-      if (data.success) {
-        setResult({
-          ...payload,
-          recommendations: data.result.recommendations
-        });
-      } else {
-        setError('Failed to compute assessment. Please try again.');
-      }
+      if (user?.id) await saveQuizResult(user.id, payload);
+      setResult({
+        career_path,
+        personality,
+        aptitude_score,
+        recommendations,
+        interest_mapping: { Technical: Math.min(scores.technical * 3, 100), Analytical: Math.min(scores.analytical * 3, 100), Creative: Math.min(scores.creative * 3, 100), Business: Math.min(scores.business * 3, 100) },
+        skills_analysis: { 'Problem Solving': Math.min(aptitude_score, 100), 'Programming Logic': Math.min(scores.technical * 3, 100), 'Product Design': Math.min(scores.creative * 3.5, 100), 'Strategic Vision': Math.min(scores.business * 3.5, 100) },
+      });
     } catch (err) {
-      setError(err.response?.data?.message || 'Error processing quiz results.');
+      setError(err.message || 'Error processing quiz results.');
     } finally {
       setLoading(false);
     }

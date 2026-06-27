@@ -1,29 +1,4 @@
 services:
-  # ── Backend Web Service ──────────────────────────────────────────
-  - type: web
-    name: infohub-backend
-    env: node
-    region: ohio
-    rootDir: backend
-    buildCommand: npm install && npm run postinstall
-    startCommand: npm start
-    envVars:
-      - key: PORT
-        value: 10000
-      - key: NODE_ENV
-        value: production
-      # These must be filled in the Render Dashboard after deployment:
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-
   # ── Frontend Static Site ─────────────────────────────────────────
   - type: web
     name: infohub-frontend
@@ -32,9 +7,3 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    envVars:
-      - key: NODE_ENV
-        value: production
-      # Points to the Render backend service automatically
-      - key: VITE_API_URL
-        value: https://infohub-backend.onrender.com/api

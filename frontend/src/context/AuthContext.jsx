@@ -1,57 +1,87 @@
 // ─────────────────────────────────────────────────────────────
-// Auth Context – global user state + JWT management
+// Auth Context – Supabase JWT Custom Authentication Flow
 // ─────────────────────────────────────────────────────────────
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import axiosInstance from '../api/axios';
+import { login as apiLogin, register as apiRegister } from '../api';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user,    setUser]    = useState(null);
-  const [token,   setToken]   = useState(localStorage.getItem('infohub_token') || null);
+  const [user,    setUser]    = useState(null);   // profile row (with role)
+  const [session, setSession] = useState(null);   // custom session
   const [loading, setLoading] = useState(true);
 
-  // ── Persist token in axios headers ───────────────────────
+  // Load session from localStorage on mount
   useEffect(() => {
-    if (token) {
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem('infohub_token', token);
-    } else {
-      delete axiosInstance.defaults.headers.common['Authorization'];
-      localStorage.removeItem('infohub_token');
-    }
-  }, [token]);
-
-  // ── Load user from token on mount ────────────────────────
-  useEffect(() => {
-    const loadUser = async () => {
-      if (!token) { setLoading(false); return; }
+    const savedSession = localStorage.getItem('mock_session');
+    if (savedSession) {
       try {
-        const { data } = await axiosInstance.get('/auth/me');
-        if (data.success) setUser(data.user);
-        else logout();
-      } catch { logout(); }
-      finally { setLoading(false); }
-    };
-    loadUser();
+        const parsed = JSON.parse(savedSession);
+        setSession(parsed.session);
+        setUser(parsed.user);
+      } catch (e) {
+        console.error('Failed to parse saved session', e);
+        localStorage.removeItem('mock_session');
+      }
+    }
+    setLoading(false);
   }, []);
 
-  const login = useCallback((userData, tokenStr) => {
-    setUser(userData);
-    setToken(tokenStr);
+  // ── Login with Supabase custom verifier ─────────────────────
+  const login = useCallback(async (email, password) => {
+    const res = await apiLogin(email, password);
+    setSession(res.data.session);
+    setUser(res.data.user);
+    return res;
   }, []);
 
-  const logout = useCallback(() => {
+  // ── Register with Supabase custom creator ──────────────────
+  const signUp = useCallback(async (email, password, metadata) => {
+    const res = await apiRegister({ email, password, role: metadata.role, ...metadata });
+    setSession(res.session);
+    setUser(res.user);
+    return { data: { session: res.session, user: res.user }, error: null };
+  }, []);
+
+  // ── Logout ────────────────────────────────────────────────
+  const logout = useCallback(async () => {
+    localStorage.removeItem('mock_session');
     setUser(null);
-    setToken(null);
+    setSession(null);
+    
+    // Clear session in supabase client
+    await supabase.auth.signOut().catch(() => {});
+    
+    window.dispatchEvent(new Event('storage'));
   }, []);
 
+
+  // ── Update local user state ───────────────────────────────
   const updateUser = useCallback((updates) => {
-    setUser(prev => ({ ...prev, ...updates }));
+    setUser(prev => {
+      const updated = prev ? { ...prev, ...updates } : prev;
+      if (updated) {
+        const savedSession = localStorage.getItem('mock_session');
+        if (savedSession) {
+          try {
+            const parsed = JSON.parse(savedSession);
+            parsed.user = updated;
+            parsed.session.user = updated;
+            localStorage.setItem('mock_session', JSON.stringify(parsed));
+          } catch (e) {}
+        }
+      }
+      return updated;
+    });
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{
+      user, session, loading,
+      login, signUp, logout, updateUser,
+      isAuthenticated: !!session,
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -62,3 +92,4 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
+
