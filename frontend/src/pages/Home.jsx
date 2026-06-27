@@ -196,6 +196,31 @@ const Home = () => {
       <section 
         className="relative min-h-screen flex items-center overflow-hidden pt-16 bg-white"
       >
+        {/* ── College Building Background Illustration ── */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            backgroundImage: `url(${collegeBgTeal})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'contain',
+            backgroundPosition: 'right bottom',
+            opacity: 0.85,
+            /* fade the left edge so it blends into the white text area */
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, transparent 35%, rgba(255,255,255,0.3) 50%, white 70%)',
+            maskImage: 'linear-gradient(to right, transparent 0%, transparent 35%, rgba(255,255,255,0.3) 50%, white 70%)',
+          }}
+        />
+
+        {/* ── Subtle teal glow layer ── */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            background: 'radial-gradient(ellipse 55% 70% at 85% 75%, rgba(0,179,165,0.07) 0%, transparent 70%)',
+          }}
+        />
+
         {/* ── Flying Birds Layer ── */}
         <BirdCanvas />
 
@@ -213,9 +238,9 @@ const Home = () => {
           ))}
         </div>
 
-
-        <div className="relative z-10 text-left px-6 sm:px-12 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-end pb-10">
-          <div className="max-w-2xl pb-16">
+        {/* ── Hero Content ── */}
+        <div className="relative z-10 text-left px-6 sm:px-12 max-w-7xl mx-auto w-full pb-16">
+          <div className="max-w-2xl">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-8 animate-fade-in">
               <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
@@ -266,30 +291,6 @@ const Home = () => {
                 Go to Dashboard →
               </Link>
             )}
-          </div>
-
-          {/* ── College Illustration (right side) ── */}
-          <div className="hidden lg:flex items-end justify-end relative" style={{ minHeight: '520px' }}>
-            {/* Soft radial glow behind the image */}
-            <div
-              className="absolute inset-0 pointer-events-none z-0"
-              style={{
-                background: 'radial-gradient(ellipse 80% 80% at 55% 65%, rgba(0,179,165,0.12) 0%, rgba(0,154,142,0.04) 60%, transparent 100%)',
-              }}
-            />
-            <img
-              src={collegeBgTeal}
-              alt="College building illustration"
-              className="relative z-10 w-full object-contain select-none pointer-events-none"
-              style={{
-                maxWidth: '680px',
-                maxHeight: '560px',
-                filter: 'drop-shadow(0 20px 40px rgba(0,154,142,0.15))',
-                animation: 'float 8s ease-in-out infinite',
-                animationDelay: '0.5s',
-              }}
-              draggable={false}
-            />
           </div>
         </div>
       </section>

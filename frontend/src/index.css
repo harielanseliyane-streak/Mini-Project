@@ -112,7 +112,6 @@
     background-clip: text;
   }
 }
-
 /* Shimmer placeholder logic */
 .shimmer {
   background: linear-gradient(90deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.03) 100%);
