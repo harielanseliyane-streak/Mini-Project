@@ -242,11 +242,6 @@ const Home = () => {
         {/* ── Hero Content (text only, left side) ── */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 py-20">
           <div className="max-w-xl">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-8 animate-fade-in">
-              <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
-              AI-Powered Discovery Engine
-            </div>
 
             {/* Headline */}
             <h1 className="font-heading text-4xl md:text-6xl font-bold text-slate-800 leading-tight mb-6 animate-slide-up">
