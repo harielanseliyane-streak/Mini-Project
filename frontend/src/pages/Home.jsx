@@ -5,7 +5,8 @@ import CollegeCard from '../components/CollegeCard';
 import { useAuth } from '../context/AuthContext';
 import { Bell, BellOff, X, Megaphone, Check, CalendarClock } from 'lucide-react';
 import BirdCanvas from '../components/BirdCanvas';
-import collegeBgTeal from '../college-bg-teal.png';
+// College illustration served from /public for best quality
+const COLLEGE_IMG = '/college-bg-teal.png';
 
 const StatCard = ({ value, label, icon }) => (
   <div className="glass rounded-2xl p-6 text-center">
@@ -193,15 +194,22 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* ── Hero Section ──────────────────────────────────── */}
-      <section 
-        className="relative min-h-screen flex items-center overflow-hidden pt-16 bg-white"
+      <section
+        className="relative min-h-screen flex items-center overflow-hidden pt-16"
+        style={{ background: 'linear-gradient(160deg, #f0fffe 0%, #ffffff 45%, #f5fffd 100%)' }}
       >
-        {/* ── Subtle teal glow layer ── */}
+        {/* ── Watercolor Background Blobs ── */}
+        <div aria-hidden="true" className="hero-watercolor-bg" />
+
+        {/* ── Subtle Dot Grid ── */}
+        <div aria-hidden="true" className="hero-dot-grid" />
+
+        {/* ── Extra teal glow behind illustration ── */}
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-0"
           style={{
-            background: 'radial-gradient(ellipse 60% 70% at 80% 60%, rgba(0,179,165,0.06) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse 55% 65% at 82% 58%, rgba(0,200,185,0.09) 0%, transparent 68%)',
           }}
         />
 
@@ -223,7 +231,7 @@ const Home = () => {
         </div>
 
         {/* ── Hero Content (2-column grid) ── */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 grid lg:grid-cols-2 gap-8 items-center py-16">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 grid lg:grid-cols-2 gap-12 items-center py-16">
 
           {/* Left column – text & CTAs */}
           <div className="max-w-2xl">
@@ -248,11 +256,11 @@ const Home = () => {
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <input 
-                  value={search} 
+                <input
+                  value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search colleges by name or city..."
-                  className="input pl-12 shadow-sm" 
+                  className="input pl-12 shadow-sm"
                 />
               </div>
               <Link to="/colleges" className="btn-primary whitespace-nowrap px-6 py-3.5 shadow-md">
@@ -279,27 +287,31 @@ const Home = () => {
             )}
           </div>
 
-          {/* Right column – College illustration */}
+          {/* Right column – College illustration with premium frame */}
           <div className="hidden lg:flex items-center justify-center relative animate-fade-in">
-            {/* Glow circle behind image */}
+            {/* Outer glow ring */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                background: 'radial-gradient(ellipse 85% 85% at 50% 50%, rgba(0,179,165,0.10) 0%, transparent 75%)',
+                background: 'radial-gradient(ellipse 90% 90% at 50% 50%, rgba(0,200,185,0.12) 0%, rgba(0,179,165,0.05) 50%, transparent 80%)',
+                filter: 'blur(20px)',
               }}
             />
-            <img
-              src={collegeBgTeal}
-              alt="College building illustration"
-              className="relative w-full object-contain select-none pointer-events-none"
-              style={{
-                maxHeight: '600px',
-                animation: 'float 7s ease-in-out infinite',
-                animationDelay: '0.3s',
-                filter: 'drop-shadow(0 16px 48px rgba(0,154,142,0.18))',
-              }}
-              draggable={false}
-            />
+            {/* Premium frame card */}
+            <div className="college-illustration-frame animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <img
+                src={COLLEGE_IMG}
+                alt="College building illustration"
+                className="relative w-full object-contain select-none pointer-events-none rounded-2xl"
+                style={{
+                  maxHeight: '560px',
+                  animation: 'float 8s ease-in-out infinite',
+                  animationDelay: '0.5s',
+                  filter: 'drop-shadow(0 12px 40px rgba(0,154,142,0.22)) saturate(1.05)',
+                }}
+                draggable={false}
+              />
+            </div>
           </div>
 
         </div>
