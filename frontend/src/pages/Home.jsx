@@ -196,20 +196,29 @@ const Home = () => {
       {/* ── Hero Section ──────────────────────────────────── */}
       <section
         className="relative min-h-screen flex items-center overflow-hidden pt-16"
-        style={{ background: 'linear-gradient(160deg, #f0fffe 0%, #ffffff 45%, #f5fffd 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, #f0fffe 0%, #ffffff 50%, #edfffe 100%)',
+          backgroundImage: `url(${COLLEGE_IMG})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right center',
+          backgroundSize: 'auto 95%',
+        }}
       >
-        {/* ── Watercolor Background Blobs ── */}
-        <div aria-hidden="true" className="hero-watercolor-bg" />
-
-        {/* ── Subtle Dot Grid ── */}
-        <div aria-hidden="true" className="hero-dot-grid" />
-
-        {/* ── Extra teal glow behind illustration ── */}
+        {/* ── White fade overlay — blends the image into the background naturally ── */}
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-0"
           style={{
-            background: 'radial-gradient(ellipse 55% 65% at 82% 58%, rgba(0,200,185,0.09) 0%, transparent 68%)',
+            background: 'linear-gradient(to right, #f4fffe 0%, #f8fffd 28%, rgba(248,255,253,0.85) 45%, rgba(255,255,255,0.2) 65%, rgba(255,255,255,0) 100%)',
+          }}
+        />
+
+        {/* ── Subtle teal glow layer ── */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            background: 'radial-gradient(ellipse 55% 65% at 82% 58%, rgba(0,200,185,0.06) 0%, transparent 68%)',
           }}
         />
 
@@ -230,11 +239,9 @@ const Home = () => {
           ))}
         </div>
 
-        {/* ── Hero Content (2-column grid) ── */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 grid lg:grid-cols-2 gap-12 items-center py-16">
-
-          {/* Left column – text & CTAs */}
-          <div className="max-w-2xl">
+        {/* ── Hero Content (text only, left side) ── */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 py-20">
+          <div className="max-w-xl">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-8 animate-fade-in">
               <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
@@ -286,34 +293,6 @@ const Home = () => {
               </Link>
             )}
           </div>
-
-          {/* Right column – College illustration with premium frame */}
-          <div className="hidden lg:flex items-center justify-center relative animate-fade-in">
-            {/* Outer glow ring */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: 'radial-gradient(ellipse 90% 90% at 50% 50%, rgba(0,200,185,0.12) 0%, rgba(0,179,165,0.05) 50%, transparent 80%)',
-                filter: 'blur(20px)',
-              }}
-            />
-            {/* Premium frame card */}
-            <div className="college-illustration-frame animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <img
-                src={COLLEGE_IMG}
-                alt="College building illustration"
-                className="relative w-full object-contain select-none pointer-events-none rounded-2xl"
-                style={{
-                  maxHeight: '560px',
-                  animation: 'float 8s ease-in-out infinite',
-                  animationDelay: '0.5s',
-                  filter: 'drop-shadow(0 12px 40px rgba(0,154,142,0.22)) saturate(1.05)',
-                }}
-                draggable={false}
-              />
-            </div>
-          </div>
-
         </div>
       </section>
 
