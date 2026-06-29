@@ -118,18 +118,52 @@ const Colleges = () => {
               ))}
             </div>
             {pagination.pages > 1 && (
-              <div className="flex justify-center gap-2 mt-10">
-                {[...Array(pagination.pages)].map((_, i) => (
-                  <button key={i} onClick={() => { setPage(i+1); fetchColleges(i+1); }}
-                    className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
-                      page === i+1
-                        ? 'bg-primary text-white shadow-md'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {i+1}
-                  </button>
-                ))}
+              <div className="flex justify-center items-center gap-3 mt-10">
+                <button
+                  onClick={() => {
+                    if (page > 1) {
+                      const prevPage = page - 1;
+                      setPage(prevPage);
+                      fetchColleges(prevPage);
+                    }
+                  }}
+                  disabled={page <= 1}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+                    page <= 1
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 active:scale-95 shadow-sm'
+                  }`}
+                >
+                  <span>←</span> Previous
+                </button>
+
+                <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <span className="w-8 h-8 rounded-lg bg-primary text-white text-sm font-bold flex items-center justify-center shadow-sm">
+                    {page}
+                  </span>
+                  <span className="text-slate-400 text-sm font-medium">/</span>
+                  <span className="text-slate-600 text-sm font-semibold px-1">
+                    {pagination.pages}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (page < pagination.pages) {
+                      const nextPage = page + 1;
+                      setPage(nextPage);
+                      fetchColleges(nextPage);
+                    }
+                  }}
+                  disabled={page >= pagination.pages}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+                    page >= pagination.pages
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'
+                      : 'bg-primary text-white hover:opacity-90 active:scale-95 shadow-sm'
+                  }`}
+                >
+                  Next <span>→</span>
+                </button>
               </div>
             )}
           </>
