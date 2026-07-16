@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getPublicColleges, saveItem, getSavedItems, removeSavedItem } from '../api';
 import CollegeCard from '../components/CollegeCard';
+import { useAuth } from '../context/AuthContext';
 import { Bell, BellOff, X, UserPlus, Cpu, FileCheck } from 'lucide-react';
 
 // College illustration served from /public for best quality
-const COLLEGE_IMG = '/college-bg-teal.png';
+const COLLEGE_IMG = '/college-hero-cap.png';
 
 const StatCard = ({ value, label, icon }) => (
   <div className="glass rounded-2xl p-6 text-center">
