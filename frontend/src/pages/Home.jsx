@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { Bell, BellOff, X, UserPlus, Cpu, FileCheck } from 'lucide-react';
 
 // College illustration served from /public for best quality
-const COLLEGE_IMG = '/college-hero-cap.png';
+const COLLEGE_IMG = '/college-bg-campus.jpg';
 
 const StatCard = ({ value, label, icon }) => (
   <div className="glass rounded-2xl p-6 text-center">
@@ -147,31 +147,14 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* ── Hero Section ──────────────────────────────────── */}
-      <section
-        className="relative min-h-screen flex items-center overflow-hidden pt-16"
-        style={{
-          background: 'linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #e0f7fa 100%)',
-          backgroundImage: `url(${COLLEGE_IMG})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right center',
-          backgroundSize: 'auto 95%',
-        }}
-      >
-        {/* ── Slate fade overlay — blends the image into the background naturally ── */}
-        <div
+      <section className="relative min-h-screen flex items-center overflow-hidden pt-16 bg-[#F8FAFC]">
+        {/* ── Full Campus Background Image with transparency ── */}
+        <div 
           aria-hidden="true"
-          className="absolute inset-0 pointer-events-none z-0"
+          className="absolute inset-0 bg-cover bg-center pointer-events-none z-0"
           style={{
-            background: 'linear-gradient(to right, #f8fafc 0%, #f8fafc 28%, rgba(248,250,252,0.85) 45%, rgba(255,255,255,0.2) 65%, rgba(255,255,255,0) 100%)',
-          }}
-        />
-
-        {/* ── Subtle Cyan glow layer ── */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 pointer-events-none z-0"
-          style={{
-            background: 'radial-gradient(ellipse 55% 65% at 82% 58%, rgba(6,182,212,0.06) 0%, transparent 68%)',
+            backgroundImage: `url(${COLLEGE_IMG})`,
+            opacity: 0.18,
           }}
         />
 
