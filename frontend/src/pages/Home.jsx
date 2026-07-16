@@ -154,7 +154,8 @@ const Home = () => {
           className="absolute inset-0 bg-cover bg-center pointer-events-none z-0"
           style={{
             backgroundImage: `url(${COLLEGE_IMG})`,
-            opacity: 0.3,
+            opacity: 0.45,
+            filter: 'brightness(0.9) contrast(1.05)',
           }}
         />
 
@@ -175,7 +176,7 @@ const Home = () => {
         </div>
 
         {/* ── Hero Content (text only, left side) ── */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 py-20">
+        <div className="relative z-10 w-full px-6 md:px-10 py-20">
           <div className="max-w-xl">
 
             {/* Headline */}
@@ -183,7 +184,7 @@ const Home = () => {
               Find the Best College for Your
               <span className="block gradient-text mt-1">Bright Future</span>
             </h1>
-            <p className="text-slate-500 text-base md:text-lg max-w-xl mb-10 leading-relaxed animate-fade-in">
+            <p className="text-slate-800 font-medium text-base md:text-lg max-w-xl mb-10 leading-relaxed animate-fade-in">
               InfoHub connects school students with the right higher education institutions using smart score and cutoff-based matching.
             </p>
 
