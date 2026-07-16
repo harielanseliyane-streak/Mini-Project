@@ -80,7 +80,7 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-24 bg-white">
+      <div className="min-h-screen flex items-center justify-center pt-24 bg-transparent">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           <p className="text-slate-500 font-semibold">Loading administration console...</p>
@@ -90,7 +90,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-6 max-w-7xl mx-auto bg-white">
+    <div className="min-h-screen pt-24 pb-12 px-6 max-w-7xl mx-auto bg-transparent">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-secondary/15 to-primary/15 border border-primary/20 flex items-center justify-center text-primary">

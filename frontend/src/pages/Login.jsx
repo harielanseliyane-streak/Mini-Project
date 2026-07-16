@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
-import BirdCanvas from '../components/BirdCanvas';
+
 
 const Login = () => {
   const [role,     setRole]     = useState('student');
@@ -45,10 +45,9 @@ const Login = () => {
 
   return (
     <div 
-      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16 px-4 bg-white"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16 px-4 bg-[#F8FAFC]"
     >
-      {/* Flying Birds Layer */}
-      <BirdCanvas />
+
 
       {/* Floating Dust / Light Particles */}
       <div aria-hidden="true" className="hero-particles">
@@ -70,8 +69,8 @@ const Login = () => {
           <Link to="/" className="inline-flex items-center gap-3 mb-3 group">
             <Logo showText={false} />
             <span className="font-heading font-extrabold text-3xl tracking-tight text-slate-800">
-              <span className="text-[#009A8E]">Info</span>
-              <span className="text-[#00B3A5] font-semibold">-Hub</span>
+              <span className="text-[#4F46E5]">Info</span>
+              <span className="text-[#06B6D4] font-semibold">-Hub</span>
             </span>
           </Link>
           <h1 className="font-heading text-3xl font-bold text-slate-800 tracking-wide">Welcome back</h1>

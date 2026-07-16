@@ -17,21 +17,25 @@ export default {
         cardLight: '#FFFFFF',
         borderLight: 'rgba(0,0,0,0.06)',
         
-        // Brand & Palette (Dark Turquoise Theme)
+        // Brand & Palette (Navy / Indigo / Cyan / Emerald Palette)
         primary: {
-          DEFAULT: '#009A8E', // Base theme color
-          hover: '#007D74',
+          DEFAULT: '#0F172A', // Navy
+          hover: '#1E293B',
         },
         secondary: {
-          DEFAULT: '#00B3A5', // Premium teal gradient stop
-          hover: '#009A8E',
+          DEFAULT: '#4F46E5', // Indigo
+          hover: '#4338CA',
         },
         purple: {
-          DEFAULT: '#00A597',
-          hover: '#008277',
+          DEFAULT: '#6366F1', // Purple/Indigo Accent
+          hover: '#4F46E5',
         },
-        accent: '#00B3A5',
-        success: '#00B3A5',
+        accent: '#06B6D4', // Cyan
+        success: '#10B981', // Emerald (CTA)
+        cta: {
+          DEFAULT: '#10B981',
+          hover: '#059669',
+        },
         warning: '#F59E0B',
         danger: '#EF4444',
         

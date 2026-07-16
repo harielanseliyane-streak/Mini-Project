@@ -75,7 +75,7 @@ const Colleges = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4 bg-white">
+    <div className="min-h-screen pt-24 pb-12 px-4 bg-[#F8FAFC]">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-10">
           <h1 className="section-title">Explore <span className="gradient-text">Colleges</span></h1>

@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getPublicColleges, saveItem, getSavedItems, removeSavedItem } from '../api';
 import CollegeCard from '../components/CollegeCard';
-import { useAuth } from '../context/AuthContext';
-import { Bell, BellOff, X, Megaphone, Check, CalendarClock } from 'lucide-react';
-import BirdCanvas from '../components/BirdCanvas';
+import { Bell, BellOff, X, UserPlus, Cpu, FileCheck } from 'lucide-react';
+
 // College illustration served from /public for best quality
 const COLLEGE_IMG = '/college-bg-teal.png';
 
@@ -50,14 +49,7 @@ const Home = () => {
   // Favorites state
   const [favoritesMap, setFavoritesMap] = useState({}); // collegeId -> savedItemId
 
-  // Bulletins state
-  const [showBulletin, setShowBulletin] = useState(false);
-  // reminders: { [id]: { date: ISO string } } or {} if not set
-  const [reminders, setReminders] = useState({});
   const [toastMsg, setToastMsg] = useState('');
-  // Reminder date-picker modal
-  const [reminderModal, setReminderModal] = useState(null); // { id, title } | null
-  const [pickedDate, setPickedDate] = useState('');
 
   // Real-time analog clock state
   const [clockTime, setClockTime] = useState(new Date());
@@ -84,22 +76,12 @@ const Home = () => {
         .catch(() => {});
     }
 
-    // Load reminders from localStorage
-    const savedReminders = localStorage.getItem('bulletin_reminders');
-    if (savedReminders) {
-      setReminders(JSON.parse(savedReminders));
-    }
 
-    // Slide in bulletin popup after 1.5 seconds
-    const timer = setTimeout(() => {
-      setShowBulletin(true);
-    }, 1500);
 
     // Real-time clock tick — every second
     const clockTick = setInterval(() => setClockTime(new Date()), 1000);
 
     return () => {
-      clearTimeout(timer);
       clearInterval(clockTick);
     };
   }, [isAuthenticated, user]);
@@ -117,37 +99,7 @@ const Home = () => {
     setTimeout(() => setToastMsg(''), 4000);
   };
 
-  // Open date-picker modal to choose reminder date
-  const handleToggleReminder = (id, title, type) => {
-    if (reminders[id]) {
-      // Already set — cancel it
-      setReminders(prev => {
-        const updated = { ...prev };
-        delete updated[id];
-        localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
-        window.dispatchEvent(new Event('bulletin_reminders_changed'));
-        return updated;
-      });
-      showToast(`🔕 Reminder cancelled for: ${title}`);
-    } else {
-      // Open date picker
-      setPickedDate('');
-      setReminderModal({ id, title, type });
-    }
-  };
 
-  const handleConfirmReminder = () => {
-    if (!pickedDate) { showToast('⚠️ Please pick a date & time first.'); return; }
-    const { id, title, type } = reminderModal;
-    setReminders(prev => {
-      const updated = { ...prev, [id]: { date: pickedDate, title, type } };
-      localStorage.setItem('bulletin_reminders', JSON.stringify(updated));
-      window.dispatchEvent(new Event('bulletin_reminders_changed'));
-      return updated;
-    });
-    showToast(`🔔 Reminder set for: ${new Date(pickedDate).toLocaleString('en-IN')}`);
-    setReminderModal(null);
-  };
 
   const handleToggleFavorite = async (collegeId) => {
     if (!isAuthenticated) {
@@ -192,38 +144,37 @@ const Home = () => {
 
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F8FAFC]">
       {/* ── Hero Section ──────────────────────────────────── */}
       <section
         className="relative min-h-screen flex items-center overflow-hidden pt-16"
         style={{
-          background: 'linear-gradient(135deg, #f0fffe 0%, #ffffff 50%, #edfffe 100%)',
+          background: 'linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #e0f7fa 100%)',
           backgroundImage: `url(${COLLEGE_IMG})`,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'right center',
           backgroundSize: 'auto 95%',
         }}
       >
-        {/* ── White fade overlay — blends the image into the background naturally ── */}
+        {/* ── Slate fade overlay — blends the image into the background naturally ── */}
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-0"
           style={{
-            background: 'linear-gradient(to right, #f4fffe 0%, #f8fffd 28%, rgba(248,255,253,0.85) 45%, rgba(255,255,255,0.2) 65%, rgba(255,255,255,0) 100%)',
+            background: 'linear-gradient(to right, #f8fafc 0%, #f8fafc 28%, rgba(248,250,252,0.85) 45%, rgba(255,255,255,0.2) 65%, rgba(255,255,255,0) 100%)',
           }}
         />
 
-        {/* ── Subtle teal glow layer ── */}
+        {/* ── Subtle Cyan glow layer ── */}
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-0"
           style={{
-            background: 'radial-gradient(ellipse 55% 65% at 82% 58%, rgba(0,200,185,0.06) 0%, transparent 68%)',
+            background: 'radial-gradient(ellipse 55% 65% at 82% 58%, rgba(6,182,212,0.06) 0%, transparent 68%)',
           }}
         />
 
-        {/* ── Flying Birds Layer ── */}
-        <BirdCanvas />
+
 
         {/* ── Floating Dust / Light Particles ── */}
         <div aria-hidden="true" className="hero-particles">
@@ -350,12 +301,12 @@ const Home = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: '01', icon: '📝', title: 'Create Your Profile', desc: 'Register and enter your HSC marks and cutoff score to get personalized recommendations.' },
-              { step: '02', icon: '🤖', title: 'AI Matching',         desc: 'Our AI analyzes your profile and matches you with eligible colleges and suitable courses.' },
-              { step: '03', icon: '🚀', title: 'Apply & Connect',     desc: 'Apply directly to colleges, register for events, and track your application status.' },
+              { step: '01', icon: <UserPlus className="w-8 h-8 text-secondary" />, title: 'Create Your Profile', desc: 'Register and enter your HSC marks and cutoff score to get personalized recommendations.' },
+              { step: '02', icon: <Cpu className="w-8 h-8 text-secondary" />, title: 'AI Matching',         desc: 'Our AI analyzes your profile and matches you with eligible colleges and suitable courses.' },
+              { step: '03', icon: <FileCheck className="w-8 h-8 text-secondary" />, title: 'Apply & Connect',     desc: 'Apply directly to colleges, register for events, and track your application status.' },
             ].map(item => (
               <div key={item.step} className="card-premium p-8 text-center group hover:-translate-y-1 transition-all">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-5 group-hover:border-primary/40 transition-all text-3xl">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/10 border border-secondary/20 mb-5 group-hover:border-secondary/40 transition-all">
                   {item.icon}
                 </div>
                 <div className="text-xs font-bold text-secondary mb-2 font-mono">{item.step}</div>
@@ -401,107 +352,7 @@ const Home = () => {
         </div>
       </footer>
 
-      {/* Bulletins Popup Drawer */}
-      {showBulletin && (
-        <div className="fixed bottom-6 left-6 z-50 w-full max-w-sm md:max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl p-5 animate-slide-up flex flex-col gap-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2">
-              <Megaphone className="w-5 h-5 text-primary" />
-              <h3 className="font-heading font-bold text-slate-800 text-sm md:text-base">📢 InfoHub Live Bulletins</h3>
-            </div>
-            <button onClick={() => setShowBulletin(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-50">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-premium pr-1">
-            {bulletinsList.map(bulletin => (
-              <div key={bulletin.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5 text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-primary">{bulletin.type}</span>
-                  <span className="text-[10px] font-semibold text-slate-400">{bulletin.date}</span>
-                </div>
-                <h4 className="font-bold text-slate-800 text-sm leading-snug">{bulletin.title}</h4>
-                <p className="text-xs text-slate-500 leading-relaxed">{bulletin.desc}</p>
-                <button
-                  onClick={() => handleToggleReminder(bulletin.id, bulletin.title, bulletin.type)}
-                  className={`mt-2 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
-                    reminders[bulletin.id]
-                      ? 'bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/20 w-full'
-                      : 'bg-primary text-white hover:bg-primary/90 shadow-sm w-full'
-                  }`}
-                >
-                  {reminders[bulletin.id] ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Reminder: {new Date(reminders[bulletin.id].date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
-                    </>
-                  ) : (
-                    <>
-                      <CalendarClock className="w-3.5 h-3.5" /> Set Reminder Date
-                    </>
-                  )}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-
-      {/* ── Bulletins Trigger button (re-opens after closing) ── */}
-      {!showBulletin && (
-        <button
-          onClick={() => setShowBulletin(true)}
-          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-        >
-          <Megaphone className="w-5 h-5 animate-bounce" />
-          <span className="text-sm">Live Bulletins ({bulletinsList.length})</span>
-        </button>
-      )}
-
-      {/* ── Reminder Date-Picker Modal ── */}
-      {reminderModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm p-6 animate-slide-up">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <CalendarClock className="w-5 h-5 text-primary" />
-                <h3 className="font-heading font-bold text-slate-800 text-base">Set Reminder</h3>
-              </div>
-              <button onClick={() => setReminderModal(null)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-50">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-500 mb-1 font-semibold">Event</p>
-            <p className="text-sm font-bold text-slate-800 mb-4 leading-snug">{reminderModal.title}</p>
-
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Choose your reminder date &amp; time</label>
-            <input
-              type="datetime-local"
-              value={pickedDate}
-              min={new Date().toISOString().slice(0, 16)}
-              onChange={e => setPickedDate(e.target.value)}
-              className="input mb-4 text-sm"
-            />
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setReminderModal(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmReminder}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
-              >
-                <Bell className="w-3.5 h-3.5 inline mr-1" /> Confirm Reminder
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast alert popup */}
 
