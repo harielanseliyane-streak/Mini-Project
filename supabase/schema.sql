@@ -249,7 +249,7 @@ DECLARE
     v_user_id UUID;
 BEGIN
     -- Check email existence
-    IF EXISTS (SELECT 1 FROM profiles WHERE lower(email) = lower(p_email)) THEN
+    IF EXISTS (SELECT 1 FROM profiles p WHERE lower(p.email) = lower(p_email)) THEN
         RAISE EXCEPTION 'Email already registered';
     END IF;
 

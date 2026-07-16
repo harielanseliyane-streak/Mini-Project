@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { register as apiRegister } from '../api';
+import { register as apiRegister, getColleges } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
@@ -22,16 +22,30 @@ const Field = ({ label, value, onChange, type = 'text', placeholder, required })
 
 const Register = () => {
   const [role,    setRole]    = useState('student');
-  const [form,    setForm]    = useState({ name: '', email: '', password: '', phone: '', college_name: '', address: '', city: '', state: '', website: '' });
+  const [form,    setForm]    = useState({ 
+    name: '', email: '', password: '', phone: '', college_name: '', 
+    address: '', city: '', state: '', website: '', 
+    is_college_student: false, college_id: '', branch: '', batch: '' 
+  });
   const [showPw,  setShowPw]  = useState(false);
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
+  const [collegesList, setCollegesList] = useState([]);
 
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, signUp } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
   useEffect(() => { if (params.get('role')) setRole(params.get('role')); }, [params]);
+  
+  useEffect(() => {
+    if (role === 'student') {
+      getColleges({ limit: 100 })
+        .then(res => setCollegesList(res.colleges || []))
+        .catch(() => {});
+    }
+  }, [role]);
+
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === 'admin')        navigate('/admin/dashboard',   { replace: true });
@@ -47,12 +61,25 @@ const Register = () => {
     setError('');
     if (!form.email || !form.password) { setError('Email and password are required'); return; }
     if (form.password.length < 6)      { setError('Password must be at least 6 characters'); return; }
-    if (role === 'student' && !form.name)         { setError('Name is required'); return; }
+    
+    if (role === 'student') {
+      if (!form.name) { setError('Name is required'); return; }
+      if (form.is_college_student) {
+        if (!form.college_name) { setError('College name is required'); return; }
+        if (!form.branch) { setError('Branch is required'); return; }
+        if (!form.batch) { setError('Batch/Year is required'); return; }
+      }
+    }
+    
     if (role === 'college' && !form.college_name) { setError('College name is required'); return; }
+    
     setLoading(true);
     try {
-      await apiRegister({ ...form, role });
-      // AuthContext will auto-detect the new session via onAuthStateChange
+      const payload = { ...form, role };
+      if (payload.college_id === 'other' || !payload.college_id) {
+        payload.college_id = null;
+      }
+      await signUp(payload.email, payload.password, payload);
     } catch (err) {
       setError(err.message || 'Registration failed');
     } finally { setLoading(false); }
@@ -114,6 +141,76 @@ const Register = () => {
                 <Field label="Full Name"    value={form.name}   onChange={set('name')}   placeholder="John Doe"          required />
                 <Field label="Email"        value={form.email}  onChange={set('email')}  type="email" placeholder="you@example.com" required />
                 <Field label="Phone Number" value={form.phone}  onChange={set('phone')}  type="tel" placeholder="+91 9876543210" />
+                
+                {/* Are you a college student? */}
+                <div className="flex items-center gap-2.5 my-3 p-3 rounded-xl bg-slate-50 border border-slate-200/60 shadow-2xs">
+                  <input 
+                    type="checkbox" 
+                    id="is_college_student" 
+                    checked={form.is_college_student}
+                    onChange={(e) => setForm(prev => ({ ...prev, is_college_student: e.target.checked }))}
+                    className="w-4 h-4 text-primary focus:ring-primary rounded border-slate-300"
+                  />
+                  <label htmlFor="is_college_student" className="text-sm font-semibold text-slate-700 select-none cursor-pointer">
+                    Are you currently a college student?
+                  </label>
+                </div>
+
+                {form.is_college_student && (
+                  <div className="space-y-4 border-l-2 border-primary/30 pl-4 my-3 animate-fade-in">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        College Name <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <select 
+                        value={form.college_id}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const selected = collegesList.find(c => (c.user_id || c.id) === val);
+                          setForm(prev => ({ 
+                            ...prev, 
+                            college_id: val, 
+                            college_name: val === 'other' ? '' : (selected ? selected.college_name : '') 
+                          }));
+                        }}
+                        className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm shadow-sm"
+                      >
+                        <option value="">-- Select Your College --</option>
+                        {collegesList.map(c => (
+                          <option key={c.user_id || c.id} value={c.user_id || c.id}>{c.college_name}</option>
+                        ))}
+                        <option value="other">Other (Specify below)</option>
+                      </select>
+                    </div>
+
+                    {(form.college_id === 'other' || !form.college_id) && (
+                      <Field 
+                        label="Specify College Name" 
+                        value={form.college_name} 
+                        onChange={set('college_name')} 
+                        placeholder="e.g. ABC Engineering College" 
+                        required 
+                      />
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field 
+                        label="Branch" 
+                        value={form.branch} 
+                        onChange={set('branch')} 
+                        placeholder="e.g. Computer Science" 
+                        required 
+                      />
+                      <Field 
+                        label="Batch / Year" 
+                        value={form.batch} 
+                        onChange={set('batch')} 
+                        placeholder="e.g. 2022 - 2026" 
+                        required 
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <>

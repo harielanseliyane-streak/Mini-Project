@@ -5,7 +5,9 @@ import {
   getFullStudentProfile, updateStudentProfile, uploadStudentPhoto,
   getColleges, getRecommendations, getMyApplications, applyToCollege,
   getSavedItems, removeSavedItem, saveItem,
+  getActiveChatPartners, getChatHistory, sendPeerMessage
 } from '../api';
+import { supabase } from '../lib/supabaseClient';
 import CollegeCard from '../components/CollegeCard';
 
 const TabBtn = ({ active, onClick, children }) => (
@@ -36,6 +38,15 @@ const StudentDashboard = () => {
   const [msg,             setMsg]             = useState('');
   const photoRef = useRef(null);
 
+  // Chat-specific states
+  const [activePartners, setActivePartners] = useState([]);
+  const [activePartner, setActivePartner] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMsg, setNewMsg] = useState('');
+  
+  // Colleges list for dropdown selection
+  const [collegesList, setCollegesList] = useState([]);
+
   // Load profile on mount
   useEffect(() => {
     if (!user?.id) return;
@@ -43,6 +54,10 @@ const StudentDashboard = () => {
       .then(p => { setProfile(p); setEditForm(p); })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    getColleges({ limit: 100 })
+      .then(res => setCollegesList(res.colleges || []))
+      .catch(() => {});
   }, [user?.id]);
 
   // Lazy-load tabs
@@ -80,7 +95,74 @@ const StudentDashboard = () => {
         })
         .catch(() => {});
     }
+    if (tab === 'chats') {
+      getActiveChatPartners()
+        .then(partners => {
+          setActivePartners(partners);
+          if (partners.length > 0 && !activePartner) {
+            setActivePartner(partners[0]);
+          }
+        })
+        .catch(() => {});
+    }
   }, [tab, user?.id]);
+
+  // Chat message fetch and realtime listener
+  useEffect(() => {
+    if (!activePartner?.partner_id || tab !== 'chats' || !user?.id) return;
+    getChatHistory(activePartner.partner_id)
+      .then(msgs => setChatMessages(msgs))
+      .catch(() => {});
+
+    // Setup realtime subscription
+    const channel = supabase
+      .channel(`room:${activePartner.partner_id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, (payload) => {
+        const msg = payload.new;
+        if (
+          (msg.sender_id === user.id && msg.receiver_id === activePartner.partner_id) ||
+          (msg.sender_id === activePartner.partner_id && msg.receiver_id === user.id)
+        ) {
+          setChatMessages(prev => {
+            if (prev.some(m => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activePartner, user?.id, tab]);
+
+  const handleSendMsg = async (e) => {
+    e.preventDefault();
+    if (!newMsg.trim() || !activePartner) return;
+    try {
+      const sent = await sendPeerMessage(activePartner.partner_id, newMsg.trim());
+      setChatMessages(prev => [...prev, sent]);
+      setNewMsg('');
+      
+      // Update the active partners list snippet
+      setActivePartners(prev => prev.map(p => {
+        if (p.partner_id === activePartner.partner_id) {
+          return {
+            ...p,
+            last_message: sent.content,
+            last_message_time: sent.created_at
+          };
+        }
+        return p;
+      }));
+    } catch (err) {
+      setMsg(`❌ Failed to send message: ${err.message}`);
+    }
+  };
 
   const handleToggleFavorite = async (collegeId) => {
     const savedId = favoritesMap[collegeId];
@@ -192,7 +274,7 @@ const StudentDashboard = () => {
         </div>
 
         <div className="flex gap-2 mb-6 flex-wrap">
-          {[['profile','👤 Profile'], ['colleges','🏛️ Colleges'], ['recommendations','🤖 Recommendations'], ['applications','📋 Applications'], ['favorites','❤️ Favorites']].map(([t, label]) => (
+          {[['profile','👤 Profile'], ['colleges','🏛️ Colleges'], ['recommendations','🤖 Recommendations'], ['applications','📋 Applications'], ['favorites','❤️ Favorites'], ['chats', '💬 Chats']].map(([t, label]) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}>{label}</TabBtn>
           ))}
         </div>
@@ -277,6 +359,132 @@ const StudentDashboard = () => {
                       </div>
                     )}
                   </>
+                )}
+              </div>
+            </div>
+
+            {/* College Enrollment Details */}
+            <div className="glass rounded-2xl p-6 lg:col-span-2">
+              <h2 className="font-heading font-bold text-slate-800 text-lg mb-5">College Enrollment Details</h2>
+              <div className="space-y-4">
+                {editMode ? (
+                  <>
+                    <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/60 shadow-2xs mb-4">
+                      <input 
+                        type="checkbox" 
+                        id="edit_is_college_student" 
+                        checked={editForm.is_college_student || false}
+                        onChange={(e) => setEditForm(p => ({ ...p, is_college_student: e.target.checked }))}
+                        className="w-4 h-4 text-primary focus:ring-primary rounded border-slate-300"
+                      />
+                      <label htmlFor="edit_is_college_student" className="text-sm font-semibold text-slate-700 select-none cursor-pointer">
+                        I am currently a college student / alumnus
+                      </label>
+                    </div>
+
+                    {editForm.is_college_student && (
+                      <div className="space-y-4 border-l-2 border-primary/30 pl-4 my-3 animate-fade-in">
+                        <div>
+                          <label className="label">Select College</label>
+                          <select 
+                            value={editForm.college_id || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const selected = collegesList.find(c => (c.user_id || c.id) === val);
+                              setEditForm(p => ({ 
+                                ...p, 
+                                college_id: val, 
+                                college_name: val === 'other' ? '' : (selected ? selected.college_name : '') 
+                              }));
+                            }}
+                            className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm shadow-sm"
+                          >
+                            <option value="">-- Select Your College --</option>
+                            {collegesList.map(c => (
+                              <option key={c.user_id || c.id} value={c.user_id || c.id}>{c.college_name}</option>
+                            ))}
+                            <option value="other">Other (Specify below)</option>
+                          </select>
+                        </div>
+
+                        {(editForm.college_id === 'other' || !editForm.college_id) && (
+                          <div>
+                            <label className="label">Specify College Name</label>
+                            <input 
+                              type="text" 
+                              value={editForm.college_name || ''} 
+                              onChange={e => setEditForm(p => ({ ...p, college_name: e.target.value }))} 
+                              placeholder="e.g. ABC Engineering College" 
+                              className="input" 
+                            />
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="label">Branch</label>
+                            <input 
+                              type="text" 
+                              value={editForm.branch || ''} 
+                              onChange={e => setEditForm(p => ({ ...p, branch: e.target.value }))} 
+                              placeholder="e.g. Computer Science" 
+                              className="input" 
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Batch / Year</label>
+                            <input 
+                              type="text" 
+                              value={editForm.batch || ''} 
+                              onChange={e => setEditForm(p => ({ ...p, batch: e.target.value }))} 
+                              placeholder="e.g. 2022 - 2026" 
+                              className="input" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <span className="text-slate-500 text-sm w-36 flex-shrink-0">Status:</span>
+                      <span className="font-semibold text-sm">
+                        {profile?.is_college_student ? (
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            🎓 Enrolled College Student / Alumnus
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#4F46E5]/10 text-[#4F46E5] border border-[#4F46E5]/20">
+                            🔎 Seeking Admission
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {profile?.is_college_student && (
+                      <>
+                        <div className="flex items-start gap-3 mt-2">
+                          <span className="text-slate-500 text-sm w-36 flex-shrink-0">College Name:</span>
+                          <span className="text-slate-800 text-sm font-semibold">{profile.college_name}</span>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-slate-500 text-sm w-36 flex-shrink-0">Branch:</span>
+                          <span className="text-slate-800 text-sm">{profile.branch || '—'}</span>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-slate-500 text-sm w-36 flex-shrink-0">Batch / Year:</span>
+                          <span className="text-slate-800 text-sm">{profile.batch || '—'}</span>
+                        </div>
+                      </>
+                    )}
+
+                    {!profile?.is_college_student && (
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-500 text-xs mt-2">
+                        💡 Are you already in college? Click **Edit** above and check *"I am currently a college student"* to switch your profile and help upcoming seekers as an alumnus!
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -445,6 +653,121 @@ const StudentDashboard = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Chats Tab ─────────────────────────────────── */}
+        {tab === 'chats' && (
+          <div className="glass rounded-2xl overflow-hidden grid md:grid-cols-3 min-h-[500px] shadow-lg border border-slate-200/80 animate-slide-up">
+            {/* Left Pane - Partners List */}
+            <div className="md:col-span-1 border-r border-slate-200 bg-slate-50/50 flex flex-col">
+              <div className="p-4 border-b border-slate-200 bg-white">
+                <h3 className="font-heading font-bold text-slate-800">Conversations</h3>
+                <p className="text-slate-400 text-xs mt-0.5">Chat with peers and alumni</p>
+              </div>
+              <div className="flex-1 overflow-y-auto divide-y divide-slate-100 scrollbar-premium">
+                {activePartners.map(p => (
+                  <button
+                    key={p.partner_id}
+                    onClick={() => setActivePartner(p)}
+                    className={`w-full p-4 text-left flex items-start gap-3 transition-colors ${
+                      activePartner?.partner_id === p.partner_id
+                        ? 'bg-primary/5 border-l-4 border-primary'
+                        : 'hover:bg-slate-100 bg-white'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                      {p.partner_name?.[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline">
+                        <h4 className="text-sm font-bold text-slate-800 truncate">{p.partner_name}</h4>
+                        <span className="text-[10px] text-slate-400 font-semibold">
+                          {p.last_message_time ? new Date(p.last_message_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 capitalize font-bold">{p.partner_role || 'Student'}</p>
+                      <p className="text-xs text-slate-500 truncate mt-1">{p.last_message || 'No messages yet'}</p>
+                    </div>
+                  </button>
+                ))}
+                {activePartners.length === 0 && (
+                  <div className="p-8 text-center text-slate-400 my-auto">
+                    <span className="text-4xl block mb-2">💬</span>
+                    <p className="text-xs font-semibold">No active chats yet.</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Visit a college detail page's "People" tab to start chatting with alumni!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Pane - Chat Window */}
+            <div className="md:col-span-2 flex flex-col bg-white">
+              {activePartner ? (
+                <>
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-slate-200 flex items-center gap-3 bg-slate-50/30">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-sm font-bold text-white">
+                      {activePartner.partner_name?.[0]?.toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-sm leading-snug">{activePartner.partner_name}</h3>
+                      <p className="text-[11px] text-slate-400 capitalize font-bold">Active {activePartner.partner_role}</p>
+                    </div>
+                  </div>
+
+                  {/* Messages list */}
+                  <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#F8FAFC]/40 scrollbar-premium flex flex-col">
+                    {chatMessages.map(m => {
+                      const isMe = m.sender_id === user.id;
+                      return (
+                        <div
+                          key={m.id}
+                          className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm shadow-2xs ${
+                            isMe
+                              ? 'bg-gradient-to-br from-[#0F172A] to-[#4F46E5] text-white self-end rounded-tr-none'
+                              : 'bg-white border border-slate-200 text-slate-800 self-start rounded-tl-none'
+                          }`}
+                        >
+                          <p className="leading-relaxed">{m.content}</p>
+                          <span
+                            className={`block text-[9px] mt-1 text-right ${
+                              isMe ? 'text-white/70' : 'text-slate-400'
+                            }`}
+                          >
+                            {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {chatMessages.length === 0 && (
+                      <div className="text-center text-slate-400 my-auto py-8">
+                        <p className="text-xs font-semibold">Send a message to start the conversation!</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Message Input */}
+                  <form onSubmit={handleSendMsg} className="p-4 border-t border-slate-200 flex gap-2">
+                    <input
+                      type="text"
+                      value={newMsg}
+                      onChange={e => setNewMsg(e.target.value)}
+                      placeholder="Type a message..."
+                      className="flex-1 input border border-slate-200 px-4 py-2.5 rounded-xl text-sm"
+                    />
+                    <button type="submit" className="btn-primary px-5 py-2.5 rounded-xl text-sm shadow-md">
+                      Send
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
+                  <span className="text-5xl mb-3">💬</span>
+                  <p className="text-sm font-semibold">Select a conversation to start chatting</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
