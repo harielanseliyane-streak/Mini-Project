@@ -85,6 +85,7 @@ export const register = async ({ email, password, role, name, college_name, phon
     p_phone: phone || null,
     p_metadata: {
       ...rest,
+      college_name: role === 'student' ? college_name : undefined,
       role
     }
   });
@@ -182,7 +183,11 @@ export const updateStudentProfile = async (userIdOrUpdates, updates) => {
   }
   if (!uid) throw new Error('Not authenticated');
 
-  const { name, phone, bio, hsc_marks, cutoff, interests, skills, career_goals, location_pref, budget_pref, course_pref } = data;
+  const { 
+    name, phone, bio, hsc_marks, cutoff, interests, skills, career_goals, 
+    location_pref, budget_pref, course_pref, is_college_student, college_id, 
+    college_name, branch, batch 
+  } = data;
 
   if (name !== undefined || phone !== undefined) {
     const profileUpdate = {};
@@ -206,6 +211,12 @@ export const updateStudentProfile = async (userIdOrUpdates, updates) => {
   if (location_pref !== undefined) studentUpdate.location_pref = location_pref;
   if (budget_pref !== undefined) studentUpdate.budget_pref = budget_pref ? parseFloat(budget_pref) : null;
   if (course_pref !== undefined) studentUpdate.course_pref = course_pref;
+  
+  if (is_college_student !== undefined) studentUpdate.is_college_student = is_college_student;
+  if (college_id !== undefined) studentUpdate.college_id = college_id || null;
+  if (college_name !== undefined) studentUpdate.college_name = college_name || null;
+  if (branch !== undefined) studentUpdate.branch = branch || null;
+  if (batch !== undefined) studentUpdate.batch = batch || null;
 
   if (Object.keys(studentUpdate).length > 0) {
     const { error: sErr } = await supabase
@@ -1239,4 +1250,72 @@ export const broadcastNotification = async (data) => {
 export const resetMockDb = () => {
   localStorage.removeItem('mock_session');
   return {};
+};
+
+// ══════════════════════════════════════════════════════════════
+// PEER TO PEER CHAT & STUDENT ENROLLMENT DETAILS
+// ══════════════════════════════════════════════════════════════
+
+export const getStudentsByCollege = async (collegeId) => {
+  const { data, error } = await supabase
+    .from('students')
+    .select('*, profiles(*)')
+    .eq('college_id', collegeId);
+
+  if (error) throw new Error(error.message);
+
+  return (data || []).map(s => ({
+    user_id: s.user_id,
+    name: s.profiles?.name || 'Anonymous Student',
+    email: s.profiles?.email,
+    phone: s.profiles?.phone,
+    profile_photo: s.profile_photo,
+    is_college_student: s.is_college_student,
+    college_id: s.college_id,
+    college_name: s.college_name,
+    branch: s.branch,
+    batch: s.batch,
+    bio: s.bio
+  }));
+};
+
+export const getChatHistory = async (otherUserId) => {
+  const uid = getActiveUserId();
+  if (!uid) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(`and(sender_id.eq.${uid},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${uid})`)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data || [];
+};
+
+export const sendPeerMessage = async (receiverId, content) => {
+  const uid = getActiveUserId();
+  if (!uid) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      sender_id: uid,
+      receiver_id: receiverId,
+      content
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export const getActiveChatPartners = async () => {
+  const uid = getActiveUserId();
+  if (!uid) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.rpc('get_active_chat_partners', { p_user_id: uid });
+  if (error) throw new Error(error.message);
+  return data || [];
 };

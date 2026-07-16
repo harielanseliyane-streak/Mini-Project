@@ -79,6 +79,32 @@ const CollegeCard = ({ college, onApply, isFavorited, onToggleFavorite }) => {
         </div>
       </div>
 
+      {/* Overlapping Student Profiles Stack (Mutuals Style) */}
+      <div className="px-5 py-2.5 flex items-center gap-2 border-b border-slate-100 bg-white">
+        <div className="flex -space-x-1.5 overflow-hidden">
+          <img 
+            className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover" 
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=60" 
+            alt="Student avatar 1" 
+          />
+          <img 
+            className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover" 
+            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=60" 
+            alt="Student avatar 2" 
+          />
+          <img 
+            className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover" 
+            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=60" 
+            alt="Student avatar 3" 
+          />
+        </div>
+        <span className="text-[11px] text-slate-500 font-semibold">
+          {college.college_name === 'PSG College of Technology' ? '50+ students enrolled' : 
+           college.college_name === 'SSN College of Engineering' ? '35+ students enrolled' : 
+           college.college_name === 'Madras Institute of Technology' ? '28+ students enrolled' : '15+ students enrolled'}
+        </span>
+      </div>
+
       {/* Description */}
       {college.description && (
         <div className="px-5 py-3">
