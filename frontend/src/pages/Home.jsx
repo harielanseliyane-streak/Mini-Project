@@ -154,7 +154,7 @@ const Home = () => {
           className="absolute inset-0 bg-cover bg-center pointer-events-none z-0"
           style={{
             backgroundImage: `url(${COLLEGE_IMG})`,
-            opacity: 0.18,
+            opacity: 0.3,
           }}
         />
 
