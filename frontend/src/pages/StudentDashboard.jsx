@@ -5,10 +5,12 @@ import {
   getFullStudentProfile, updateStudentProfile, uploadStudentPhoto,
   getColleges, getRecommendations, getMyApplications, applyToCollege,
   getSavedItems, removeSavedItem, saveItem,
-  getActiveChatPartners, getChatHistory, sendPeerMessage
+  getActiveChatPartners, getChatHistory, sendPeerMessage,
+  getMyNotifications, markNotificationRead, markAllNotificationsRead,
 } from '../api';
 import { supabase } from '../lib/supabaseClient';
 import CollegeCard from '../components/CollegeCard';
+import CampusBuddyStatusCard from '../components/CampusBuddyStatusCard';
 
 const TabBtn = ({ active, onClick, children }) => (
   <button onClick={onClick}
@@ -43,9 +45,17 @@ const StudentDashboard = () => {
   const [activePartner, setActivePartner] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMsg, setNewMsg] = useState('');
-  
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading]   = useState(false);
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
   // Colleges list for dropdown selection
   const [collegesList, setCollegesList] = useState([]);
+  
+  // Campus Buddy status refresh trigger
+  const [buddyRefresh, setBuddyRefresh] = useState(0);
 
   // Load profile on mount
   useEffect(() => {
@@ -105,6 +115,13 @@ const StudentDashboard = () => {
         })
         .catch(() => {});
     }
+    if (tab === 'notifications') {
+      setNotifLoading(true);
+      getMyNotifications(user.id)
+        .then(setNotifications)
+        .catch(() => {})
+        .finally(() => setNotifLoading(false));
+    }
   }, [tab, user?.id]);
 
   // Chat message fetch and realtime listener
@@ -139,6 +156,20 @@ const StudentDashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [activePartner, user?.id, tab]);
+
+  // Supabase Realtime — live notifications
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`notif:${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          setNotifications(prev => [payload.new, ...prev]);
+        }
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [user?.id]);
 
   const handleSendMsg = async (e) => {
     e.preventDefault();
@@ -274,9 +305,30 @@ const StudentDashboard = () => {
         </div>
 
         <div className="flex gap-2 mb-6 flex-wrap">
-          {[['profile','👤 Profile'], ['colleges','🏛️ Colleges'], ['recommendations','🤖 Recommendations'], ['applications','📋 Applications'], ['favorites','❤️ Favorites'], ['chats', '💬 Chats']].map(([t, label]) => (
+          {[
+            ['profile','👤 Profile'],
+            ['colleges','🏛️ Colleges'],
+            ['recommendations','🤖 Recommendations'],
+            ['applications','📋 Applications'],
+            ['favorites','❤️ Favorites'],
+            ['chats', '💬 Chats'],
+          ].map(([t, label]) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}>{label}</TabBtn>
           ))}
+          {/* Notifications tab with unread badge */}
+          <button
+            onClick={() => setTab('notifications')}
+            className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              tab === 'notifications' ? 'bg-primary/20 text-primary border border-primary/30' : 'text-slate-500 hover:text-primary hover:bg-slate-100'
+            }`}
+          >
+            🔔 Notifications
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Message */}
@@ -488,6 +540,13 @@ const StudentDashboard = () => {
                 )}
               </div>
             </div>
+            {/* Campus Buddy Status — shown when student is enrolled */}
+            {profile?.is_college_student && (
+              <div className="lg:col-span-2">
+                <CampusBuddyStatusCard userId={user?.id} refresh={buddyRefresh} />
+              </div>
+            )}
+
           </div>
         )}
 
@@ -651,6 +710,80 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Notifications Tab ────────────────────────────────── */}
+        {tab === 'notifications' && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-heading text-xl font-bold text-slate-800">🔔 Notifications</h2>
+              {unreadCount > 0 && (
+                <button
+                  onClick={async () => {
+                    await markAllNotificationsRead(user.id);
+                    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                  }}
+                  className="text-xs text-primary font-semibold hover:underline"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
+
+            {notifLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="card-premium p-12 text-center">
+                <span className="text-4xl block mb-3">🔔</span>
+                <p className="text-slate-500 font-semibold">No notifications yet</p>
+                <p className="text-slate-400 text-xs mt-1">You'll see Campus Buddy status updates and other alerts here.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map(n => {
+                  const typeCfg = {
+                    success: { bg: 'bg-emerald-50 border-emerald-200', icon: '🎉', text: 'text-emerald-700' },
+                    error:   { bg: 'bg-red-50 border-red-200',         icon: '❌', text: 'text-red-700' },
+                    warning: { bg: 'bg-amber-50 border-amber-200',     icon: '⚠️', text: 'text-amber-700' },
+                    info:    { bg: 'bg-blue-50 border-blue-200',       icon: 'ℹ️', text: 'text-blue-700' },
+                  }[n.type] || { bg: 'bg-slate-50 border-slate-200', icon: '🔔', text: 'text-slate-700' };
+
+                  return (
+                    <div
+                      key={n.id}
+                      onClick={async () => {
+                        if (!n.is_read) {
+                          await markNotificationRead(n.id);
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+                        }
+                      }}
+                      className={`rounded-2xl border p-4 cursor-pointer transition-all ${
+                        n.is_read ? 'opacity-70 bg-white border-slate-200' : `${typeCfg.bg} shadow-sm`
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-lg flex-shrink-0 mt-0.5">{typeCfg.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className={`font-bold text-sm ${typeCfg.text}`}>{n.title}</p>
+                            {!n.is_read && (
+                              <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
+                            )}
+                          </div>
+                          <p className="text-slate-600 text-xs mt-1 leading-relaxed">{n.message}</p>
+                          <p className="text-slate-400 text-[10px] mt-2">
+                            {new Date(n.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
