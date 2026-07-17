@@ -160,8 +160,8 @@ const CollegeDashboard = () => {
   const handleBuddyApprove = async (id) => {
     try {
       await approveCampusBuddyRequest(id);
-      setBuddyRequests(prev => prev.map(r => r.id === id ? { ...r, verification_status: 'approved' } : r));
-      notify('✅ Campus Buddy approved! Student has been notified.');
+      setBuddyRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Approved' } : r));
+      notify('✅ Campus Buddy approved! Student account created.');
     } catch { notify('❌ Approval failed'); }
   };
 
@@ -171,8 +171,8 @@ const CollegeDashboard = () => {
     if (!reason.trim()) { notify('❌ Please select or enter a rejection reason'); return; }
     try {
       await rejectCampusBuddyRequest(rejectModal.id, reason);
-      setBuddyRequests(prev => prev.filter(r => r.id !== rejectModal.id));
-      notify('✅ Request rejected. Account has been deleted.');
+      setBuddyRequests(prev => prev.map(r => r.id === rejectModal.id ? { ...r, status: 'Rejected', rejection_reason: reason } : r));
+      notify('✅ Request rejected.');
       setRejectModal(null); setRejectReason(''); setCustomReason('');
     } catch { notify('❌ Rejection failed'); }
   };
@@ -220,9 +220,9 @@ const CollegeDashboard = () => {
             }`}
           >
             🏅 Campus Buddy Requests
-            {buddyRequests.filter(r => r.verification_status === 'pending').length > 0 && (
+            {buddyRequests.filter(r => r.status === 'Pending').length > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-                {buddyRequests.filter(r => r.verification_status === 'pending').length}
+                {buddyRequests.filter(r => r.status === 'Pending').length}
               </span>
             )}
           </button>
@@ -432,7 +432,7 @@ const CollegeDashboard = () => {
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
                 <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-slate-200 animate-slide-up">
                   <h3 className="font-bold text-slate-800 mb-1">Reject: {rejectModal.name}</h3>
-                  <p className="text-xs text-slate-400 mb-4">Select or enter the reason for rejection. The student will be notified.</p>
+                  <p className="text-xs text-slate-400 mb-4">Select or enter the reason for rejection.</p>
                   <div className="space-y-2 mb-4">
                     {REJECT_REASONS.map(r => (
                       <button key={r} onClick={() => setRejectReason(r)}
@@ -464,9 +464,9 @@ const CollegeDashboard = () => {
                 Campus Buddy Requests ({buddyRequests.length})
               </h2>
               <div className="flex gap-2 text-xs">
-                {[['pending','🟡 Pending'],['approved','🟢 Approved'],['rejected','🔴 Rejected']].map(([s,l]) => (
+                {[['Pending','Status: Pending'],['Approved','Status: Approved'],['Rejected','Status: Rejected']].map(([s,l]) => (
                   <span key={s} className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 font-semibold">
-                    {l}: {buddyRequests.filter(r => r.verification_status === s).length}
+                    {l}: {buddyRequests.filter(r => r.status === s).length}
                   </span>
                 ))}
               </div>
@@ -486,10 +486,10 @@ const CollegeDashboard = () => {
               <div className="space-y-4">
                 {buddyRequests.map(req => {
                   const statusCfg = {
-                    pending:  { dot: 'bg-amber-400 animate-pulse', badge: 'bg-amber-100 text-amber-700 border-amber-200', label: 'Pending' },
-                    approved: { dot: 'bg-emerald-400', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', label: 'Approved' },
-                    rejected: { dot: 'bg-red-400', badge: 'bg-red-100 text-red-700 border-red-200', label: 'Rejected' },
-                  }[req.verification_status] || {};
+                    Pending:  { dot: 'bg-amber-400 animate-pulse', badge: 'bg-amber-100 text-amber-700 border-amber-200', label: 'Pending' },
+                    Approved: { dot: 'bg-emerald-400', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', label: 'Approved' },
+                    Rejected: { dot: 'bg-red-400', badge: 'bg-red-100 text-red-700 border-red-200', label: 'Rejected' },
+                  }[req.status] || { dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-700 border-slate-200', label: req.status };
 
                   return (
                     <div key={req.id} className="glass rounded-2xl p-5 border border-slate-200">
@@ -497,11 +497,11 @@ const CollegeDashboard = () => {
                       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#06B6D4] flex items-center justify-center text-white font-bold text-sm shadow-md">
-                            {(req.profiles?.name || 'S')[0].toUpperCase()}
+                            {(req.name || 'S')[0].toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-800 text-sm">{req.profiles?.name || '—'}</p>
-                            <p className="text-slate-400 text-xs">{req.profiles?.email}</p>
+                            <p className="font-bold text-slate-800 text-sm">{req.name || '—'}</p>
+                            <p className="text-slate-400 text-xs">{req.email}</p>
                           </div>
                         </div>
                         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold ${statusCfg.badge}`}>
@@ -512,7 +512,7 @@ const CollegeDashboard = () => {
 
                       {/* Details grid */}
                       <div className="grid grid-cols-2 gap-x-6 gap-y-2 mb-4 text-xs border-t border-slate-100 pt-3">
-                        {[['📚 Dept', req.department],['📅 Year', req.year],['🔢 Roll', req.roll_number],['✉️ Email', req.college_email],['🕐 Applied', new Date(req.created_at).toLocaleDateString('en-IN')]].map(([label, val]) => (
+                        {[['📚 Dept', req.department],['📅 Year', req.year],['🔢 Roll', req.roll_number],['✉️ Email', req.email],['🕐 Applied', new Date(req.created_at).toLocaleDateString('en-IN')]].map(([label, val]) => (
                           <div key={label} className="flex gap-1.5">
                             <span className="text-slate-400 flex-shrink-0">{label}:</span>
                             <span className="font-semibold text-slate-700 truncate">{val || '—'}</span>
@@ -534,13 +534,13 @@ const CollegeDashboard = () => {
                             🪪 View ID Card
                           </a>
                         )}
-                        {req.verification_status === 'pending' && (
+                        {req.status === 'Pending' && (
                           <>
                             <button onClick={() => handleBuddyApprove(req.id)}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-sm">
                               ✅ Accept
                             </button>
-                            <button onClick={() => { setRejectModal({ id: req.id, name: req.profiles?.name || 'Student' }); setRejectReason(''); }}
+                            <button onClick={() => { setRejectModal({ id: req.id, name: req.name || 'Student' }); setRejectReason(''); }}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-red-500 hover:bg-red-600 text-white transition-all shadow-sm">
                               ❌ Reject
                             </button>

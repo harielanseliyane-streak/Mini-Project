@@ -1326,28 +1326,27 @@ export const getActiveChatPartners = async () => {
 
 /**
  * Submit a Campus Buddy verification request.
- * Uploads the ID card, inserts into campus_buddies, and creates
- * a pending notification for the college.
+ * Does NOT create a user account. Stores request in campus_buddy_requests.
+ * Sends a notification directly to the selected college's dashboard.
  */
 export const submitCampusBuddyRequest = async ({
-  userId,
+  name,
+  email,
+  password, // plain text
   college_id,
   college_name,
   department,
   year,
   roll_number,
-  college_email,
   idCardFile,
   why_buddy,
 }) => {
-  const uid = userId || getActiveUserId();
-  if (!uid) throw new Error('Not authenticated');
-
-  // ── Upload Student ID Card ─────────────────────────────────
+  // ── Upload Student ID Card using random UUID since user doesn't exist yet ──
   let student_id_url = null;
   if (idCardFile) {
+    const tempId = generateUUID();
     const fileExt = idCardFile.name.split('.').pop();
-    const filePath = `${uid}/${Date.now()}.${fileExt}`;
+    const filePath = `${tempId}/${Date.now()}.${fileExt}`;
     const { error: uploadError } = await supabase.storage
       .from('student-ids')
       .upload(filePath, idCardFile, { upsert: true });
@@ -1360,27 +1359,37 @@ export const submitCampusBuddyRequest = async ({
     }
   }
 
-  // ── Insert campus buddy request ────────────────────────────
+  // ── Insert into campus_buddy_requests ──────────────────────
   const { data: inserted, error } = await supabase
-    .from('campus_buddies')
+    .from('campus_buddy_requests')
     .insert({
-      user_id: uid,
+      name,
+      email: email.trim().toLowerCase(),
+      password_hash: password, // Plain text password stored to match profiles table pattern
       college_id: college_id || null,
       college_name,
       department,
       year,
       roll_number,
-      college_email: college_email.trim().toLowerCase(),
       student_id_url,
-      why_buddy: why_buddy || null,
-      verification_status: 'pending',
+      status: 'Pending',
     })
     .select()
     .single();
 
   if (error) {
-    if (error.code === '23505') throw new Error('You have already applied for Campus Buddy.');
+    if (error.code === '23505') throw new Error('A request with this email already exists.');
     throw new Error(error.message);
+  }
+
+  // ── Notify the target college administrator ────────────────
+  if (college_id) {
+    await supabase.from('notifications').insert({
+      user_id: college_id, // college profile ID receiving notification
+      title: '🔔 New Notification',
+      message: `${name} has requested to become a Campus Buddy.`,
+      type: 'info',
+    });
   }
 
   return { success: true, request: inserted };
@@ -1390,15 +1399,15 @@ export const submitCampusBuddyRequest = async ({
 export const registerCampusBuddy = submitCampusBuddyRequest;
 
 /**
- * Get all Campus Buddy requests for a specific college.
- * Includes the student's profile name, email and phone.
+ * Get all Pending Campus Buddy requests for a specific college.
  */
 export const getCollegeCampusBuddyRequests = async (collegeId) => {
   if (!collegeId) throw new Error('College ID required');
   const { data, error } = await supabase
-    .from('campus_buddies')
-    .select('*, profiles(name, email, phone)')
+    .from('campus_buddy_requests')
+    .select('*')
     .eq('college_id', collegeId)
+    .eq('status', 'Pending')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return data || [];
@@ -1406,48 +1415,79 @@ export const getCollegeCampusBuddyRequests = async (collegeId) => {
 
 /**
  * Approve a Campus Buddy request.
- * Sets status → approved, sends success notification to student.
+ * Creates the user profile and campus buddy profile.
+ * Generates JWT access token.
  */
 export const approveCampusBuddyRequest = async (requestId, adminNote = '') => {
-  // Get the request first to know who to notify
+  // Load the request details first
   const { data: req, error: fetchErr } = await supabase
-    .from('campus_buddies')
-    .select('user_id, college_name')
+    .from('campus_buddy_requests')
+    .select('*')
     .eq('id', requestId)
     .single();
   if (fetchErr) throw new Error(fetchErr.message);
 
-  const { error } = await supabase
-    .from('campus_buddies')
-    .update({ verification_status: 'approved', admin_note: adminNote || null })
-    .eq('id', requestId);
-  if (error) throw new Error(error.message);
+  // 1. Create account in users / profiles table via RPC
+  const { data: profiles, error: registerErr } = await supabase.rpc('register_user', {
+    p_email: req.email,
+    p_password: req.password_hash,
+    p_role: 'student',
+    p_name: req.name,
+    p_phone: null,
+    p_metadata: {
+      college_name: req.college_name,
+      college_id: req.college_id,
+      branch: req.department,
+      batch: req.year,
+      is_college_student: true
+    }
+  });
 
-  // Send notification to student
+  if (registerErr) throw new Error(registerErr.message);
+  const newUser = profiles[0];
+
+  // 2. Create Campus Buddy profile in campus_buddies
+  const { error: buddyErr } = await supabase.from('campus_buddies').insert({
+    user_id: newUser.id,
+    college_id: req.college_id,
+    college_name: req.college_name,
+    department: req.department,
+    year: req.year,
+    roll_number: req.roll_number,
+    college_email: req.email, // using requests email
+    student_id_url: req.student_id_url,
+    verification_status: 'approved',
+    admin_note: adminNote || null
+  });
+  if (buddyErr) throw new Error(buddyErr.message);
+
+  // 3. Update status in requests table
+  const { error: statusErr } = await supabase
+    .from('campus_buddy_requests')
+    .update({ status: 'Approved' })
+    .eq('id', requestId);
+  if (statusErr) throw new Error(statusErr.message);
+
+  // 4. Send approval notification to student
   await supabase.from('notifications').insert({
-    user_id: req.user_id,
+    user_id: newUser.id,
     title: '🎉 Campus Buddy Approved!',
-    message: `Congratulations! Your Campus Buddy account has been approved by ${req.college_name}. You can now connect with students across the InfoHub platform.`,
+    message: 'Congratulations! Your college has approved your Campus Buddy request. Your account is now active.',
     type: 'success',
   });
 
   return { success: true };
 };
 
+/**
+ * Reject a Campus Buddy request.
+ * Sets request status to Rejected, sets rejection reason, and notifies admin.
+ */
 export const rejectCampusBuddyRequest = async (requestId, rejectionReason) => {
-  const { data: req, error: fetchErr } = await supabase
-    .from('campus_buddies')
-    .select('user_id, college_name')
-    .eq('id', requestId)
-    .single();
-  if (fetchErr) throw new Error(fetchErr.message);
-
-  // Completely delete the profiles row for this user.
-  // Foreign keys ON DELETE CASCADE will automatically delete the students and campus_buddies rows.
   const { error } = await supabase
-    .from('profiles')
-    .delete()
-    .eq('id', req.user_id);
+    .from('campus_buddy_requests')
+    .update({ status: 'Rejected', rejection_reason: rejectionReason })
+    .eq('id', requestId);
   if (error) throw new Error(error.message);
 
   return { success: true };
@@ -1455,19 +1495,43 @@ export const rejectCampusBuddyRequest = async (requestId, rejectionReason) => {
 
 /**
  * Get the Campus Buddy status for a given student.
- * Returns null if no request found.
+ * Looks up by user ID or email check.
  */
-export const getStudentCampusBuddyStatus = async (userId) => {
-  const uid = userId || getActiveUserId();
-  if (!uid) throw new Error('Not authenticated');
-  const { data, error } = await supabase
-    .from('campus_buddies')
-    .select('*')
-    .eq('user_id', uid)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data;
+export const getStudentCampusBuddyStatus = async (userId, email) => {
+  if (userId) {
+    const { data, error } = await supabase
+      .from('campus_buddies')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (!error && data) return data;
+  }
+
+  if (email) {
+    const { data, error } = await supabase
+      .from('campus_buddy_requests')
+      .select('*')
+      .eq('email', email.trim().toLowerCase())
+      .maybeSingle();
+    if (!error && data) {
+      return {
+        verification_status: data.status.toLowerCase(),
+        college_name: data.college_name,
+        department: data.department,
+        year: data.year,
+        roll_number: data.roll_number,
+        rejection_reason: data.rejection_reason,
+        created_at: data.created_at,
+      };
+    }
+  }
+
+  return null;
 };
+
+// Backwards-compat alias
+export const getCampusBuddyStatus = getStudentCampusBuddyStatus;
+
 
 // Backwards-compat alias
 export const getCampusBuddyStatus = getStudentCampusBuddyStatus;

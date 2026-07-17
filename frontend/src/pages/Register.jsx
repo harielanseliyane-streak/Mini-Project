@@ -237,35 +237,31 @@ const Register = () => {
       const payload = { ...form, role };
       if (payload.college_id === 'other' || !payload.college_id) payload.college_id = null;
 
-      // ── Step 1: Create Account ──────────────────────────────
-      const result = await signUp(payload.email, payload.password, payload);
-      const newUser = result?.data?.user;
-
-      if (form.is_college_student && newUser?.id) {
-        // ── Step 2: Run verification animations & submit ──────
-        const submitPromise = (async () => {
-          const { submitCampusBuddyRequest } = await import('../api');
-          return submitCampusBuddyRequest({
-            userId: newUser.id,
-            college_id: payload.college_id,
-            college_name: form.college_name,
-            department: form.buddy_department,
-            year: form.buddy_year,
-            roll_number: form.buddy_roll,
-            college_email: form.buddy_college_email,
-            why_buddy: form.buddy_why || null,
-            idCardFile,
-          });
-        })();
+      if (form.is_college_student) {
+        // ── Campus Buddy Flow: Do NOT sign up user yet. Submit request directly ──
+        const { submitCampusBuddyRequest } = await import('../api');
+        const submitPromise = submitCampusBuddyRequest({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          college_id: payload.college_id,
+          college_name: form.college_name,
+          department: form.buddy_department,
+          year: form.buddy_year,
+          roll_number: form.buddy_roll,
+          idCardFile,
+          why_buddy: form.buddy_why || null,
+        });
 
         await Promise.all([runLoadAnimation(), submitPromise]);
 
-        setSuccessMsg("Please wait while we submit your verification request. Your account will remain inactive until it is approved by your college administration.");
+        setSuccessMsg("Your Campus Buddy request has been submitted successfully. Your account will only be created after approval from your college administrator.");
         setTimeout(() => {
-          navigate('/student/dashboard', { replace: true });
-        }, 5000);
+          navigate('/login', { replace: true });
+        }, 6000);
       } else {
-        // Simple redirect for college profiles or non-buddy students
+        // ── Normal Flow: Create user profile immediately ──
+        await signUp(payload.email, payload.password, payload);
         navigate(role === 'student' ? '/student/dashboard' : '/college/dashboard', { replace: true });
       }
     } catch (err) {
