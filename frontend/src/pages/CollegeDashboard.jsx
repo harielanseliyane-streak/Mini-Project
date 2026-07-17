@@ -162,7 +162,9 @@ const CollegeDashboard = () => {
       await approveCampusBuddyRequest(id);
       setBuddyRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Approved' } : r));
       notify('✅ Campus Buddy approved! Student account created.');
-    } catch { notify('❌ Approval failed'); }
+    } catch (err) {
+      notify(`❌ ${err.message || 'Approval failed'}`);
+    }
   };
 
   const handleBuddyReject = async () => {
