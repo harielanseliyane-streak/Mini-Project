@@ -1533,9 +1533,6 @@ export const getStudentCampusBuddyStatus = async (userId, email) => {
 export const getCampusBuddyStatus = getStudentCampusBuddyStatus;
 
 
-// Backwards-compat alias
-export const getCampusBuddyStatus = getStudentCampusBuddyStatus;
-
 /** Get all Campus Buddy applications (admin). */
 export const getAllCampusBuddyApplications = async () => {
   const { data, error } = await supabase
