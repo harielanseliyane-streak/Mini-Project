@@ -114,14 +114,45 @@ const Register = () => {
     name: '', email: '', password: '', phone: '', college_name: '',
     address: '', city: '', state: '', website: '',
     is_college_student: false, college_id: '', branch: '', batch: '',
+    // Buddy details
+    buddy_department: '',
+    buddy_year: '',
+    buddy_roll: '',
+    buddy_college_email: '',
+    buddy_why: '',
   });
   const [showPw,       setShowPw]       = useState(false);
   const [error,        setError]        = useState('');
   const [loading,      setLoading]      = useState(false);
   const [collegesList, setCollegesList] = useState([]);
-  // After account creation, store new userId to show campus buddy form
-  const [registeredUser, setRegisteredUser] = useState(null);
-  const [buddyDone,      setBuddyDone]      = useState(false);
+  
+  // Campus Buddy form upload states
+  const [idCardFile,    setIdCardFile]    = useState(null);
+  const [idCardPreview, setIdCardPreview] = useState(null);
+  const [dragOver,      setDragOver]      = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Loading animation states
+  const [loadStep,     setLoadStep]     = useState(0);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [successMsg,   setSuccessMsg]   = useState('');
+
+  const LOAD_STEPS = [
+    { label: 'Uploading Student ID...', icon: '📤' },
+    { label: 'Verifying Details...', icon: '🔍' },
+    { label: 'Sending Request to College...', icon: '🏫' },
+  ];
+
+  const FLOW_STEPS = [
+    { icon: '☑️', label: 'Check Box' },
+    { icon: '📝', label: 'Fill Details' },
+    { icon: '📤', label: 'Submit' },
+    { icon: '⏳', label: 'Pending' },
+    { icon: '🏫', label: 'College Reviews' },
+    { icon: '✅', label: 'Approved' },
+  ];
+
+  const YEAR_OPTIONS = ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Final Year', 'Post Graduate'];
 
   const { isAuthenticated, user, signUp } = useAuth();
   const navigate = useNavigate();
@@ -149,18 +180,55 @@ const Register = () => {
 
 
 
-  // ── Submit — creates account only; buddy form handled separately ────────────
+  // File drop helpers
+  const handleFileChange = (file) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError('ID card file must be under 5 MB.'); return; }
+    setIdCardFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setIdCardPreview(e.target.result);
+    reader.readAsDataURL(file);
+    setError('');
+  };
+
+  // Run progress load visual steps
+  const runLoadAnimation = () =>
+    new Promise((resolve) => {
+      let step = 0;
+      setLoadStep(0);
+      setLoadProgress(5);
+      const advance = () => {
+        step += 1;
+        if (step >= LOAD_STEPS.length) {
+          setLoadProgress(100);
+          setTimeout(resolve, 350);
+          return;
+        }
+        setLoadStep(step);
+        setLoadProgress(Math.round(((step + 1) / LOAD_STEPS.length) * 95));
+        setTimeout(advance, 850);
+      };
+      setTimeout(advance, 800);
+    });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
 
     if (!form.email || !form.password) { setError('Email and password are required'); return; }
     if (form.password.length < 6)      { setError('Password must be at least 6 characters'); return; }
     if (role === 'student' && !form.name)          { setError('Name is required'); return; }
+    
     if (role === 'student' && form.is_college_student) {
-      if (!form.college_name) { setError('College name is required'); return; }
-      if (!form.branch)       { setError('Branch / Degree is required'); return; }
-      if (!form.batch)        { setError('Batch / Year is required'); return; }
+      if (!form.college_name)        { setError('College name is required'); return; }
+      if (!form.branch)              { setError('Branch / Degree is required'); return; }
+      if (!form.batch)               { setError('Batch / Year is required'); return; }
+      if (!form.buddy_department)    { setError('Department is required for Campus Buddy'); return; }
+      if (!form.buddy_year)          { setError('Year of study is required for Campus Buddy'); return; }
+      if (!form.buddy_roll)          { setError('Roll number is required for Campus Buddy'); return; }
+      if (!form.buddy_college_email) { setError('Official college email is required'); return; }
+      if (!idCardFile)               { setError('Please upload your Student ID Card'); return; }
     }
     if (role === 'college' && !form.college_name)  { setError('College name is required'); return; }
 
@@ -168,21 +236,40 @@ const Register = () => {
     try {
       const payload = { ...form, role };
       if (payload.college_id === 'other' || !payload.college_id) payload.college_id = null;
+
+      // ── Step 1: Create Account ──────────────────────────────
       const result = await signUp(payload.email, payload.password, payload);
       const newUser = result?.data?.user;
 
       if (form.is_college_student && newUser?.id) {
-        // Show campus buddy form with the new user id
-        setRegisteredUser({
-          id: newUser.id,
-          college_id: payload.college_id,
-          college_name: form.college_name,
-        });
+        // ── Step 2: Run verification animations & submit ──────
+        const submitPromise = (async () => {
+          const { submitCampusBuddyRequest } = await import('../api');
+          return submitCampusBuddyRequest({
+            userId: newUser.id,
+            college_id: payload.college_id,
+            college_name: form.college_name,
+            department: form.buddy_department,
+            year: form.buddy_year,
+            roll_number: form.buddy_roll,
+            college_email: form.buddy_college_email,
+            why_buddy: form.buddy_why || null,
+            idCardFile,
+          });
+        })();
+
+        await Promise.all([runLoadAnimation(), submitPromise]);
+
+        setSuccessMsg("Please wait while we submit your verification request. Your account will remain inactive until it is approved by your college administration.");
+        setTimeout(() => {
+          navigate('/student/dashboard', { replace: true });
+        }, 5000);
+      } else {
+        // Simple redirect for college profiles or non-buddy students
+        navigate(role === 'student' ? '/student/dashboard' : '/college/dashboard', { replace: true });
       }
-      // For non-buddy students and colleges, AuthContext redirects automatically
     } catch (err) {
       setError(err.message || 'Registration failed');
-    } finally {
       setLoading(false);
     }
   };
@@ -190,34 +277,6 @@ const Register = () => {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16 px-4 bg-[#F8FAFC]">
 
-      {/* ── Campus Buddy Form Overlay (post-registration) ──────────────── */}
-      {registeredUser && !buddyDone && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 overflow-y-auto max-h-[90vh] animate-slide-up">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="font-bold text-slate-800 text-base">🏅 Campus Buddy Registration</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Account created! Now complete your Campus Buddy details.</p>
-              </div>
-              <button
-                onClick={() => { setBuddyDone(true); navigate('/student/dashboard', { replace: true }); }}
-                className="text-slate-400 hover:text-slate-600 transition-colors text-sm px-3 py-1 rounded-lg hover:bg-slate-100"
-              >
-                Skip →
-              </button>
-            </div>
-            <CampusBuddyRequestForm
-              userId={registeredUser.id}
-              college_id={registeredUser.college_id}
-              college_name={registeredUser.college_name}
-              onSuccess={() => {
-                setBuddyDone(true);
-                setTimeout(() => navigate('/student/dashboard', { replace: true }), 2500);
-              }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Floating Particles */}
       <div aria-hidden="true" className="hero-particles">
@@ -415,6 +474,122 @@ const Register = () => {
                       <Field label="Batch / Year" value={form.batch} onChange={set('batch')} placeholder="e.g. 2022–2026" required />
                     </div>
 
+                    {/* ── Campus Buddy Fields Divider ───────────────────── */}
+                    <div className="flex items-center gap-3 pt-1">
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+                      <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Campus Buddy Verification Details</span>
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+                    </div>
+
+                    {/* ── Department ───────────────────────────────────── */}
+                    <Field
+                      label="Department"
+                      value={form.buddy_department}
+                      onChange={set('buddy_department')}
+                      placeholder="e.g. Computer Science & Engineering"
+                      required
+                    />
+
+                    {/* ── Year & Roll Number ────────────────────────────── */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                          Year of Study <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <select
+                          value={form.buddy_year}
+                          onChange={set('buddy_year')}
+                          className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition-all text-sm shadow-sm"
+                        >
+                          <option value="">-- Select Year --</option>
+                          {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                      <Field
+                        label="Roll Number"
+                        value={form.buddy_roll}
+                        onChange={set('buddy_roll')}
+                        placeholder="e.g. ADS23105"
+                        required
+                      />
+                    </div>
+
+                    {/* ── Official College Email ─────────────────────────── */}
+                    <Field
+                      label="Official College Email"
+                      value={form.buddy_college_email}
+                      onChange={set('buddy_college_email')}
+                      type="email"
+                      placeholder="e.g. hari@college.edu"
+                      required
+                      icon="✉️"
+                    />
+
+                    {/* ── Student ID Card Upload ─────────────────────────── */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        🪪 Upload Student ID Card <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileChange(e.dataTransfer.files[0]); }}
+                        className={`w-full rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${
+                          dragOver
+                            ? 'border-indigo-400 bg-indigo-50'
+                            : idCardFile
+                            ? 'border-emerald-400 bg-emerald-50'
+                            : 'border-slate-300 bg-slate-50 hover:border-indigo-300 hover:bg-indigo-50/50'
+                        }`}
+                      >
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => handleFileChange(e.target.files[0])}
+                        />
+                        <div className="flex flex-col items-center justify-center gap-2 py-5 px-4">
+                          {idCardPreview ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <img src={idCardPreview} alt="ID Preview" className="w-16 h-16 object-cover rounded-xl border border-emerald-300 shadow-sm" />
+                              <span className="text-xs text-emerald-700 font-semibold">✓ {idCardFile.name}</span>
+                              <span className="text-xs text-slate-400">Click to change</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-slate-400">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm font-semibold text-slate-600">
+                                  {dragOver ? 'Drop your ID card here' : 'Drag & drop or click to upload'}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-0.5">JPG, PNG or PDF (max 5 MB)</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Why Campus Buddy ──────────────────────────────── */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        Why Campus Buddy? <span className="text-slate-400 normal-case font-normal">(Optional)</span>
+                      </label>
+                      <textarea
+                        value={form.buddy_why}
+                        onChange={set('buddy_why')}
+                        rows={3}
+                        placeholder="Share your motivation..."
+                        className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition-all text-sm shadow-sm resize-none leading-relaxed"
+                      />
+                    </div>
+
                   </div>
                 )}
               </>
@@ -459,23 +634,48 @@ const Register = () => {
               </div>
             )}
 
+            {/* ── Loading Animation overlay inside form card during signup ── */}
+            {loading && form.is_college_student && (
+              <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 mt-4 animate-fade-in space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+                  <p className="font-bold text-indigo-800 text-xs">{LOAD_STEPS[loadStep]?.label}</p>
+                </div>
+                <div className="h-1.5 rounded-full bg-indigo-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-700 ease-out"
+                    style={{ width: `${loadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed mt-4 animate-fade-in">
+                <p className="font-bold mb-1">⏳ Request Pending</p>
+                {successMsg}
+              </div>
+            )}
+
             {/* ── Submit ───────────────────────────────────────────────── */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full py-4 rounded-xl font-bold text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-base mt-3 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                form.is_college_student
-                  ? '🎓 Create Account & Continue'
-                  : `Create ${role === 'student' ? 'Student' : 'College'} Account`
-              )}
-            </button>
+            {!successMsg && (
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary w-full py-4 rounded-xl font-bold text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-base mt-3 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing Account...
+                  </>
+                ) : (
+                  form.is_college_student
+                    ? '🏅 Create Campus Buddy Account'
+                    : `Create ${role === 'student' ? 'Student' : 'College'} Account`
+                )}
+              </button>
+            )}
           </form>
 
           <p className="text-center text-slate-500 text-sm mt-6">

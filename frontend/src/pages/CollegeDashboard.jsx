@@ -171,8 +171,8 @@ const CollegeDashboard = () => {
     if (!reason.trim()) { notify('❌ Please select or enter a rejection reason'); return; }
     try {
       await rejectCampusBuddyRequest(rejectModal.id, reason);
-      setBuddyRequests(prev => prev.map(r => r.id === rejectModal.id ? { ...r, verification_status: 'rejected', rejection_reason: reason } : r));
-      notify('✅ Request rejected. Student has been notified.');
+      setBuddyRequests(prev => prev.filter(r => r.id !== rejectModal.id));
+      notify('✅ Request rejected. Account has been deleted.');
       setRejectModal(null); setRejectReason(''); setCustomReason('');
     } catch { notify('❌ Rejection failed'); }
   };

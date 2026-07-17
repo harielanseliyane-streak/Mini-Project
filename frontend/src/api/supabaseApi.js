@@ -1434,10 +1434,6 @@ export const approveCampusBuddyRequest = async (requestId, adminNote = '') => {
   return { success: true };
 };
 
-/**
- * Reject a Campus Buddy request.
- * Sets status → rejected, saves rejection reason, notifies student.
- */
 export const rejectCampusBuddyRequest = async (requestId, rejectionReason) => {
   const { data: req, error: fetchErr } = await supabase
     .from('campus_buddies')
@@ -1446,18 +1442,13 @@ export const rejectCampusBuddyRequest = async (requestId, rejectionReason) => {
     .single();
   if (fetchErr) throw new Error(fetchErr.message);
 
+  // Completely delete the profiles row for this user.
+  // Foreign keys ON DELETE CASCADE will automatically delete the students and campus_buddies rows.
   const { error } = await supabase
-    .from('campus_buddies')
-    .update({ verification_status: 'rejected', rejection_reason: rejectionReason })
-    .eq('id', requestId);
+    .from('profiles')
+    .delete()
+    .eq('id', req.user_id);
   if (error) throw new Error(error.message);
-
-  await supabase.from('notifications').insert({
-    user_id: req.user_id,
-    title: '❌ Campus Buddy Request Rejected',
-    message: `Your Campus Buddy verification request was rejected by ${req.college_name}. Reason: ${rejectionReason}. Please verify your details and re-submit.`,
-    type: 'error',
-  });
 
   return { success: true };
 };
