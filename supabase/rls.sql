@@ -188,6 +188,29 @@ CREATE POLICY "Allow students to manage quiz results"
     ON quiz_results FOR ALL 
     USING (auth.uid() = student_id);
 
--- ── 15. AUTH SETTINGS ────────────────────────────────────────
 ALTER TABLE auth_settings ENABLE ROW LEVEL SECURITY;
 -- No policies defined, blocking any access via standard client REST API.
+
+-- ── 16. CAMPUS BUDDIES ───────────────────────────────────────
+ALTER TABLE campus_buddies ENABLE ROW LEVEL SECURITY;
+
+-- Students can view their own application
+CREATE POLICY "Allow students to view own campus buddy application"
+    ON campus_buddies FOR SELECT
+    USING (auth.uid() = user_id OR auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+
+-- Students can insert their own application
+CREATE POLICY "Allow students to register as campus buddy"
+    ON campus_buddies FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+-- Admins can update verification status
+CREATE POLICY "Allow admins to update campus buddy status"
+    ON campus_buddies FOR UPDATE
+    USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+
+-- Admins can delete
+CREATE POLICY "Allow admins to delete campus buddy records"
+    ON campus_buddies FOR DELETE
+    USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+

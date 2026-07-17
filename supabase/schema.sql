@@ -207,6 +207,44 @@ CREATE INDEX IF NOT EXISTS idx_applications_college_id ON applications(college_i
 CREATE INDEX IF NOT EXISTS idx_saved_items_student_id ON saved_items(student_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_results_student_id ON quiz_results(student_id);
 
+-- ── 16. CAMPUS BUDDY COLUMNS (added to students) ──────────────
+-- These columns track whether a student is enrolled and in which college.
+ALTER TABLE students
+    ADD COLUMN IF NOT EXISTS is_college_student BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS college_id UUID REFERENCES colleges(user_id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS college_name TEXT,
+    ADD COLUMN IF NOT EXISTS branch TEXT,
+    ADD COLUMN IF NOT EXISTS batch TEXT;
+
+-- ── 17. CAMPUS BUDDIES TABLE ──────────────────────────────────
+-- Stores Campus Buddy verification requests from enrolled students.
+CREATE TABLE IF NOT EXISTS campus_buddies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    college_name TEXT NOT NULL,
+    department TEXT NOT NULL,
+    year TEXT NOT NULL,               -- e.g. "2nd Year", "Final Year"
+    roll_number TEXT NOT NULL,
+    college_email TEXT NOT NULL,
+    student_id_url TEXT,              -- URL to uploaded student ID card in Supabase Storage
+    why_buddy TEXT,                   -- Optional motivation text
+    verification_status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (verification_status IN ('pending', 'approved', 'rejected')),
+    admin_note TEXT,                  -- Admin's approval/rejection note
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(user_id)                   -- One Campus Buddy application per user
+);
+
+-- Indexes for campus_buddies
+CREATE INDEX IF NOT EXISTS idx_campus_buddies_user_id ON campus_buddies(user_id);
+CREATE INDEX IF NOT EXISTS idx_campus_buddies_status ON campus_buddies(verification_status);
+
+-- Note: Create a Supabase Storage bucket named "student-ids" with:
+--   - Public access: true (for verified download URLs)
+--   - Max file size: 5 MB
+--   - Allowed MIME types: image/*, application/pdf
+
+
 
 -- ─────────────────────────────────────────────────────────────
 -- RPC DATABASE FUNCTIONS (SECURITY DEFINER to bypass RLS)
