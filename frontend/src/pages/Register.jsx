@@ -106,25 +106,6 @@ const CustomDropdown = ({ value, onChange, placeholder = '-- Select --', label, 
   );
 };
 
-// ─── Year Options ─────────────────────────────────────────────────────────────
-const YEAR_OPTIONS = ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Final Year', 'Post Graduate'];
-
-// ─── Upload Icon ──────────────────────────────────────────────────────────────
-const UploadIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-  </svg>
-);
-
-// ─── Verification Flow Steps ──────────────────────────────────────────────────
-const FLOW_STEPS = [
-  { icon: '☑️', label: 'Check Box' },
-  { icon: '📝', label: 'Fill Details' },
-  { icon: '📤', label: 'Submit' },
-  { icon: '⏳', label: 'Pending' },
-  { icon: '🏫', label: 'Admin Reviews' },
-  { icon: '✅', label: 'Approved' },
-];
 
 // ─── Main Register Component ──────────────────────────────────────────────────
 const Register = () => {
@@ -166,16 +147,7 @@ const Register = () => {
 
   const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
 
-  // ── File helpers ────────────────────────────────────────────────────────────
-  const handleFileChange = (file) => {
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { setError('ID card file must be under 5 MB.'); return; }
-    setIdCardFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => setIdCardPreview(e.target.result);
-    reader.readAsDataURL(file);
-    setError('');
-  };
+
 
   // ── Submit — creates account only; buddy form handled separately ────────────
   const handleSubmit = async (e) => {
