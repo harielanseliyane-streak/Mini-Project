@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { getColleges } from '../api';
+import { getColleges, submitCampusBuddyRequest } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import CampusBuddyRequestForm from '../components/CampusBuddyRequestForm';
@@ -239,7 +239,6 @@ const Register = () => {
 
       if (form.is_college_student) {
         // ── Campus Buddy Flow: Do NOT sign up user yet. Submit request directly ──
-        const { submitCampusBuddyRequest } = await import('../api');
         const submitPromise = submitCampusBuddyRequest({
           name: form.name,
           email: form.email,

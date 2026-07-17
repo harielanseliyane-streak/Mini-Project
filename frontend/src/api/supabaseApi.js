@@ -1344,7 +1344,7 @@ export const submitCampusBuddyRequest = async ({
   // ── Upload Student ID Card using random UUID since user doesn't exist yet ──
   let student_id_url = null;
   if (idCardFile) {
-    const tempId = generateUUID();
+    const tempId = crypto.randomUUID();
     const fileExt = idCardFile.name.split('.').pop();
     const filePath = `${tempId}/${Date.now()}.${fileExt}`;
     const { error: uploadError } = await supabase.storage
