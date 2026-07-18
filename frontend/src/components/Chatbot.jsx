@@ -15,6 +15,8 @@ const Chatbot = () => {
   const [pulse, setPulse] = useState(true);
   const [isListening, setIsListening] = useState(false);
   
+  const [isPeerChatOpen, setIsPeerChatOpen] = useState(false);
+  
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const listeningTimeout = useRef(null);
@@ -22,6 +24,16 @@ const Chatbot = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  useEffect(() => {
+    const handlePeerChatStatus = (e) => {
+      setIsPeerChatOpen(!!e.detail?.isOpen);
+    };
+    window.addEventListener('peer-chat-status', handlePeerChatStatus);
+    return () => {
+      window.removeEventListener('peer-chat-status', handlePeerChatStatus);
+    };
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -79,24 +91,26 @@ const Chatbot = () => {
   return (
     <>
       {/* ── Floating Button ── */}
-      <motion.button
-        onClick={() => setOpen(o => !o)}
-        aria-label="Open AI chatbot"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary shadow-primary-glow flex items-center justify-center text-white"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        animate={pulse ? { scale: [1, 1.05, 1] } : {}}
-        transition={pulse ? { repeat: Infinity, duration: 2 } : {}}
-      >
-        {open ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
-        {!open && pulse && (
-          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-accent rounded-full border-2 border-white animate-pulse" />
-        )}
-      </motion.button>
+      {!isPeerChatOpen && (
+        <motion.button
+          onClick={() => setOpen(o => !o)}
+          aria-label="Open AI chatbot"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary shadow-primary-glow flex items-center justify-center text-white"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          animate={pulse ? { scale: [1, 1.05, 1] } : {}}
+          transition={pulse ? { repeat: Infinity, duration: 2 } : {}}
+        >
+          {open ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
+          {!open && pulse && (
+            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-accent rounded-full border-2 border-white animate-pulse" />
+          )}
+        </motion.button>
+      )}
 
       {/* ── Chat Window ── */}
       <AnimatePresence>
-        {open && (
+        {open && !isPeerChatOpen && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

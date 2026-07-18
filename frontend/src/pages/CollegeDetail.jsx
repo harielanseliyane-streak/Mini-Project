@@ -89,6 +89,14 @@ const CollegeDetail = () => {
     setChatPartner(student);
   };
 
+  useEffect(() => {
+    const event = new CustomEvent('peer-chat-status', { detail: { isOpen: !!chatPartner } });
+    window.dispatchEvent(event);
+    return () => {
+      window.dispatchEvent(new CustomEvent('peer-chat-status', { detail: { isOpen: false } }));
+    };
+  }, [chatPartner]);
+
   const handleApply = async (course_id) => {
     if (!user) { navigate('/login'); return; }
     try {
